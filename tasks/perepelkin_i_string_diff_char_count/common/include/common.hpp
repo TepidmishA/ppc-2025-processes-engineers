@@ -7,9 +7,9 @@
 
 namespace perepelkin_i_string_diff_char_count {
 
-using InType = int;
+using InType = std::pair<std::string, std::string>;
 using OutType = int;
-using TestType = std::tuple<int, std::string>;
+using TestType = std::pair<std::string, int>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace perepelkin_i_string_diff_char_count

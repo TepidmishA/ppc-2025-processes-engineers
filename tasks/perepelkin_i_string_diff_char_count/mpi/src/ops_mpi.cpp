@@ -2,11 +2,7 @@
 
 #include <mpi.h>
 
-#include <numeric>
-#include <vector>
-
 #include "perepelkin_i_string_diff_char_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace perepelkin_i_string_diff_char_count {
 
@@ -17,56 +13,69 @@ PerepelkinIStringDiffCharCountMPI::PerepelkinIStringDiffCharCountMPI(const InTyp
 }
 
 bool PerepelkinIStringDiffCharCountMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return (GetOutput() == 0);
 }
 
 bool PerepelkinIStringDiffCharCountMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool PerepelkinIStringDiffCharCountMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
+  int ProcRank, ProcNum;
+  MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
+  MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
+
+  const auto& [s1, s2] = GetInput();
+  const int len1 = static_cast<int>(s1.size());
+  const int len2 = static_cast<int>(s2.size());
+  const int min_len = std::min(len1, len2);
+  const int max_len = std::max(len1, len2);
+
+  // Prepare distribution of indices across processes
+  int distribution_size = min_len / ProcNum;
+  int remainder = min_len % ProcNum;
+  int local_size = distribution_size + (ProcRank < remainder ? 1 : 0);
+
+  std::vector<char> local_s1(local_size);
+  std::vector<char> local_s2(local_size);
+
+  std::vector<int> counts(ProcNum);
+  std::vector<int> displacements(ProcNum);
+  int offset = 0;
+  for (int i = 0; i < ProcNum; i++) {
+    counts[i] = distribution_size + (i < remainder ? 1 : 0);
+    displacements[i] = offset;
+    offset += counts[i];
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
+  // Scatter parts of the strings to processes
+  MPI_Scatterv(s1.data(), counts.data(), displacements.data(), MPI_CHAR,
+               local_s1.data(), local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(s2.data(), counts.data(), displacements.data(), MPI_CHAR,
+               local_s2.data(), local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  // Compute local number of differing characters
+  int local_diff = 0;
+  for (int i = 0; i < local_size; ++i) {
+    if (local_s1[i] != local_s2[i])
+      local_diff++;
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+  // Reduce (sum) differences for the common parts
+  int global_diff = 0;
+  MPI_Reduce(&local_diff, &global_diff, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
-
-    if (counter != 0) {
-      GetOutput() /= counter;
-    }
+  // Add differences from the "tail" (extra characters of the longer string)
+  if (ProcRank == 0) {
+    global_diff += (max_len - min_len);
+    GetOutput() = global_diff;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  return true;
 }
 
 bool PerepelkinIStringDiffCharCountMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace perepelkin_i_string_diff_char_count
