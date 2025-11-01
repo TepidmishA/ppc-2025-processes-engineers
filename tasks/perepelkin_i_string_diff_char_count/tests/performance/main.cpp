@@ -8,15 +8,40 @@
 namespace perepelkin_i_string_diff_char_count {
 
 class PerepelkinIStringDiffCharCountPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
+ private:
+  InType input_data_ = std::pair("", "");
+  OutType expected_count_ = 0;
 
   void SetUp() override {
-    input_data_ = kCount_;
+    std::string file_name = "performance_large_diff.txt";
+    expected_count_ = 12174228;
+    
+    std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_perepelkin_i_string_diff_char_count, file_name);
+    std::ifstream file(file_path);
+
+    if (!file.is_open()) {
+      throw std::runtime_error("Failed to open file: " + file_path);
+    }
+
+    std::string str_1, str_2;
+    if (!std::getline(file, str_1)) {
+      throw std::runtime_error("Failed to read first string from: " + file_path);
+    }
+    if (!std::getline(file, str_2)) {
+      throw std::runtime_error("Failed to read second string from: " + file_path);
+    }
+
+    std::string extra_line;
+    if (std::getline(file, extra_line) && !extra_line.empty()) {
+      throw std::runtime_error("Unexpected extra data in: " + file_path + " (expected only two strings)");
+    }
+    
+    input_data_ = std::make_pair(str_1, str_2);
+    file.close();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return (expected_count_ == output_data);
   }
 
   InType GetTestInputData() final {
