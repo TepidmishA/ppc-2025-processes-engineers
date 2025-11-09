@@ -30,7 +30,7 @@ class PerepelkinIStringDiffCharCountFuncTestProcesses : public ppc::util::BaseRu
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::string file_name = params.first;
     expected_count_ = params.second;
-    
+
     std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_perepelkin_i_string_diff_char_count, file_name);
     std::ifstream file(file_path);
 
@@ -54,7 +54,7 @@ class PerepelkinIStringDiffCharCountFuncTestProcesses : public ppc::util::BaseRu
     if (std::getline(file, extra_line) && !extra_line.empty()) {
       throw std::runtime_error("Unexpected extra data in: " + file_path + " (expected only two strings)");
     }
-    
+
     input_data_ = std::make_pair(str_1, str_2);
     file.close();
   }
@@ -74,12 +74,12 @@ class PerepelkinIStringDiffCharCountFuncTestProcesses : public ppc::util::BaseRu
   static std::string FormatFileName(const std::string &filename) {
     size_t dot_index = filename.find_last_of(".");
     if (dot_index != std::string::npos) {
-        return filename.substr(0, dot_index);
+      return filename.substr(0, dot_index);
     }
     return filename;
   }
 
-  static void trim_cr(std::string& s) {
+  static void trim_cr(std::string &s) {
     if (!s.empty() && s.back() == '\r') {
       s.pop_back();
     }
@@ -93,28 +93,24 @@ TEST_P(PerepelkinIStringDiffCharCountFuncTestProcesses, StringDifFromFile) {
 }
 
 const std::array<TestType, 13> kTestParam = {
-  std::make_pair("first_empty.txt", 6),
-  std::make_pair("second_empty.txt", 6),
-  std::make_pair("empty_strings.txt", 0),
-  std::make_pair("identical_short.txt", 0),
-  std::make_pair("single_diff.txt", 1),
-  std::make_pair("diff_length_extra_chars.txt", 1),
-  std::make_pair("completely_different.txt", 4),
-  std::make_pair("with_spaces.txt", 2),
-  std::make_pair("case_sensitive.txt", 1),
-  std::make_pair("long_strings_partial_diff.txt", 1),
-  std::make_pair("long_diff_tail.txt", 3),
-  std::make_pair("special_chars.txt", 1),
-  std::make_pair("mixed_length_utf8.txt", 1),
+    std::make_pair("first_empty.txt", 6),          std::make_pair("second_empty.txt", 6),
+    std::make_pair("empty_strings.txt", 0),        std::make_pair("identical_short.txt", 0),
+    std::make_pair("single_diff.txt", 1),          std::make_pair("diff_length_extra_chars.txt", 1),
+    std::make_pair("completely_different.txt", 4), std::make_pair("with_spaces.txt", 2),
+    std::make_pair("case_sensitive.txt", 1),       std::make_pair("long_strings_partial_diff.txt", 1),
+    std::make_pair("long_diff_tail.txt", 3),       std::make_pair("special_chars.txt", 1),
+    std::make_pair("mixed_length_utf8.txt", 1),
 };
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<PerepelkinIStringDiffCharCountMPI, InType>(kTestParam, PPC_SETTINGS_perepelkin_i_string_diff_char_count),
-                   ppc::util::AddFuncTask<PerepelkinIStringDiffCharCountSEQ, InType>(kTestParam, PPC_SETTINGS_perepelkin_i_string_diff_char_count));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PerepelkinIStringDiffCharCountMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_perepelkin_i_string_diff_char_count),
+                                           ppc::util::AddFuncTask<PerepelkinIStringDiffCharCountSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_perepelkin_i_string_diff_char_count));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName = PerepelkinIStringDiffCharCountFuncTestProcesses::PrintFuncTestName<PerepelkinIStringDiffCharCountFuncTestProcesses>;
+const auto kFuncTestName =
+    PerepelkinIStringDiffCharCountFuncTestProcesses::PrintFuncTestName<PerepelkinIStringDiffCharCountFuncTestProcesses>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, PerepelkinIStringDiffCharCountFuncTestProcesses, kGtestValues, kFuncTestName);
 

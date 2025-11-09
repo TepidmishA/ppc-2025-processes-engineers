@@ -19,17 +19,12 @@ bool PerepelkinIStringDiffCharCountSEQ::PreProcessingImpl() {
 }
 
 bool PerepelkinIStringDiffCharCountSEQ::RunImpl() {
-  const auto& [s1, s2] = GetInput();
+  const auto &[s1, s2] = GetInput();
   const size_t min_len = std::min(s1.size(), s2.size());
   const size_t max_len = std::max(s1.size(), s2.size());
 
-  int diff = std::transform_reduce(
-    s1.begin(), s1.begin() + static_cast<std::ptrdiff_t>(min_len),
-    s2.begin(),
-    0,
-    std::plus<>(),
-    std::not_equal_to<>()
-  );
+  int diff = std::transform_reduce(s1.begin(), s1.begin() + static_cast<std::ptrdiff_t>(min_len), s2.begin(), 0,
+                                   std::plus<>(), std::not_equal_to<>());
 
   GetOutput() = diff + (max_len - min_len);
   return true;

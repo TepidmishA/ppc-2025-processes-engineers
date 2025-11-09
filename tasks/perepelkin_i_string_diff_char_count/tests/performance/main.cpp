@@ -15,7 +15,7 @@ class PerepelkinIStringDiffCharCountPerfTestProcesses : public ppc::util::BaseRu
   void SetUp() override {
     std::string file_name = "performance_large_diff.txt";
     expected_count_ = 12174228;
-    
+
     std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_perepelkin_i_string_diff_char_count, file_name);
     std::ifstream file(file_path);
 
@@ -39,7 +39,7 @@ class PerepelkinIStringDiffCharCountPerfTestProcesses : public ppc::util::BaseRu
     if (std::getline(file, extra_line) && !extra_line.empty()) {
       throw std::runtime_error("Unexpected extra data in: " + file_path + " (expected only two strings)");
     }
-    
+
     input_data_ = std::make_pair(str_1, str_2);
     file.close();
   }
@@ -52,7 +52,7 @@ class PerepelkinIStringDiffCharCountPerfTestProcesses : public ppc::util::BaseRu
     return input_data_;
   }
 
-  static void trim_cr(std::string& s) {
+  static void trim_cr(std::string &s) {
     if (!s.empty() && s.back() == '\r') {
       s.pop_back();
     }
@@ -64,7 +64,8 @@ TEST_P(PerepelkinIStringDiffCharCountPerfTestProcesses, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PerepelkinIStringDiffCharCountMPI, PerepelkinIStringDiffCharCountSEQ>(PPC_SETTINGS_perepelkin_i_string_diff_char_count);
+    ppc::util::MakeAllPerfTasks<InType, PerepelkinIStringDiffCharCountMPI, PerepelkinIStringDiffCharCountSEQ>(
+        PPC_SETTINGS_perepelkin_i_string_diff_char_count);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

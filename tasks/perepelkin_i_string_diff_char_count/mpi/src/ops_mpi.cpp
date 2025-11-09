@@ -25,7 +25,7 @@ bool PerepelkinIStringDiffCharCountMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
   MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
 
-  const auto& [s1, s2] = GetInput();
+  const auto &[s1, s2] = GetInput();
   const int len1 = static_cast<int>(s1.size());
   const int len2 = static_cast<int>(s2.size());
   const int min_len = std::min(len1, len2);
@@ -48,19 +48,14 @@ bool PerepelkinIStringDiffCharCountMPI::RunImpl() {
   std::vector<char> local_s2(local_size);
 
   // Scatter parts of the strings to processes
-  MPI_Scatterv(s1.data(), counts.data(), displacements.data(), MPI_CHAR,
-               local_s1.data(), local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
-  MPI_Scatterv(s2.data(), counts.data(), displacements.data(), MPI_CHAR,
-               local_s2.data(), local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(s1.data(), counts.data(), displacements.data(), MPI_CHAR, local_s1.data(), local_size, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
+  MPI_Scatterv(s2.data(), counts.data(), displacements.data(), MPI_CHAR, local_s2.data(), local_size, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
 
   // Compute local number of differing characters
-  int local_diff = std::transform_reduce(
-    local_s1.begin(), local_s1.end(),
-    local_s2.begin(),
-    0,
-    std::plus<>(),
-    std::not_equal_to<>()
-  );
+  int local_diff = std::transform_reduce(local_s1.begin(), local_s1.end(), local_s2.begin(), 0, std::plus<>(),
+                                         std::not_equal_to<>());
 
   // Reduce (sum) differences for the common parts
   int global_diff = 0;
