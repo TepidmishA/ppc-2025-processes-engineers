@@ -57,20 +57,15 @@ bool PerepelkinIStringDiffCharCountMPI::RunImpl() {
   // Compute local number of differing characters
   int local_diff = 0;
   for (int i = 0; i < local_size; ++i) {
-    if (local_s1[i] != local_s2[i])
+    if (local_s1[i] != local_s2[i]) {
       local_diff++;
+    }
   }
 
   // Reduce (sum) differences for the common parts
   int global_diff = 0;
-  MPI_Reduce(&local_diff, &global_diff, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  // Add differences from the "tail" (extra characters of the longer string)
-  if (ProcRank == 0) {
-    global_diff += (max_len - min_len);
-    GetOutput() = global_diff;
-  }
-
+  MPI_Allreduce(&local_diff, &global_diff, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  GetOutput() = global_diff + (max_len - min_len);
   return true;
 }
 
