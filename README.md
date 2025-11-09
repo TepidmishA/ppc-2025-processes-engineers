@@ -1,5 +1,5 @@
 [![Build application](https://github.com/learning-process/ppc-2025-processes-engineers/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/learning-process/ppc-2025-processes-engineers/actions/workflows/main.yml)
-[![Pages](https://github.com/learning-process/ppc-2025-processes-engineers/actions/workflows/pages.yml/badge.svg?branch=master)](https://github.com/learning-process/ppc-2025-processes-engineers/actions/workflows/pages.yml)
+[![Pages](https://github.com/learning-process/parallel_programming_course/actions/workflows/pages.yml/badge.svg?branch=master)](https://github.com/learning-process/parallel_programming_course/actions/workflows/pages.yml)
 [![CodeQL](https://github.com/learning-process/ppc-2025-processes-engineers/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/learning-process/ppc-2025-processes-engineers/actions/workflows/codeql.yml)
 [![codecov](https://codecov.io/gh/learning-process/ppc-2025-processes-engineers/graph/badge.svg?token=qCOtqeFyIz)](https://codecov.io/gh/learning-process/ppc-2025-processes-engineers)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/learning-process/ppc-2025-processes-engineers/badge)](https://scorecard.dev/viewer/?uri=github.com/learning-process/ppc-2025-processes-engineers)
