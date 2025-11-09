@@ -1,5 +1,10 @@
 #include "perepelkin_i_string_diff_char_count/seq/include/ops_seq.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <functional>
+#include <numeric>
+
 #include "perepelkin_i_string_diff_char_count/common/include/common.hpp"
 
 namespace perepelkin_i_string_diff_char_count {
@@ -26,7 +31,7 @@ bool PerepelkinIStringDiffCharCountSEQ::RunImpl() {
   int diff = std::transform_reduce(s1.begin(), s1.begin() + static_cast<std::ptrdiff_t>(min_len), s2.begin(), 0,
                                    std::plus<>(), std::not_equal_to<>());
 
-  GetOutput() = diff + (max_len - min_len);
+  GetOutput() = diff + static_cast<int>(max_len - min_len);
   return true;
 }
 

@@ -1,9 +1,15 @@
 #include <gtest/gtest.h>
 
+#include <fstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
 #include "perepelkin_i_string_diff_char_count/common/include/common.hpp"
 #include "perepelkin_i_string_diff_char_count/mpi/include/ops_mpi.hpp"
 #include "perepelkin_i_string_diff_char_count/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace perepelkin_i_string_diff_char_count {
 
@@ -23,7 +29,8 @@ class PerepelkinIStringDiffCharCountPerfTestProcesses : public ppc::util::BaseRu
       throw std::runtime_error("Failed to open file: " + file_path);
     }
 
-    std::string str_1, str_2;
+    std::string str_1;
+    std::string str_2;
     if (!std::getline(file, str_1)) {
       throw std::runtime_error("Failed to read first string from: " + file_path);
     }
@@ -32,8 +39,8 @@ class PerepelkinIStringDiffCharCountPerfTestProcesses : public ppc::util::BaseRu
     }
 
     // Fix for end of file
-    trim_cr(str_1);
-    trim_cr(str_2);
+    TrimCr(str_1);
+    TrimCr(str_2);
 
     std::string extra_line;
     if (std::getline(file, extra_line) && !extra_line.empty()) {
@@ -52,7 +59,7 @@ class PerepelkinIStringDiffCharCountPerfTestProcesses : public ppc::util::BaseRu
     return input_data_;
   }
 
-  static void trim_cr(std::string &s) {
+  static void TrimCr(std::string &s) {
     if (!s.empty() && s.back() == '\r') {
       s.pop_back();
     }

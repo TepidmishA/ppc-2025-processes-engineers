@@ -1,15 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
-#include <vector>
 
 #include "perepelkin_i_string_diff_char_count/common/include/common.hpp"
 #include "perepelkin_i_string_diff_char_count/mpi/include/ops_mpi.hpp"
@@ -38,7 +35,8 @@ class PerepelkinIStringDiffCharCountFuncTestProcesses : public ppc::util::BaseRu
       throw std::runtime_error("Failed to open file: " + file_path);
     }
 
-    std::string str_1, str_2;
+    std::string str_1;
+    std::string str_2;
     if (!std::getline(file, str_1)) {
       throw std::runtime_error("Failed to read first string from: " + file_path);
     }
@@ -47,8 +45,8 @@ class PerepelkinIStringDiffCharCountFuncTestProcesses : public ppc::util::BaseRu
     }
 
     // Fix for end of file
-    trim_cr(str_1);
-    trim_cr(str_2);
+    TrimCr(str_1);
+    TrimCr(str_2);
 
     std::string extra_line;
     if (std::getline(file, extra_line) && !extra_line.empty()) {
@@ -72,14 +70,14 @@ class PerepelkinIStringDiffCharCountFuncTestProcesses : public ppc::util::BaseRu
   OutType expected_count_ = 0;
 
   static std::string FormatFileName(const std::string &filename) {
-    size_t dot_index = filename.find_last_of(".");
+    size_t dot_index = filename.find_last_of('.');
     if (dot_index != std::string::npos) {
       return filename.substr(0, dot_index);
     }
     return filename;
   }
 
-  static void trim_cr(std::string &s) {
+  static void TrimCr(std::string &s) {
     if (!s.empty() && s.back() == '\r') {
       s.pop_back();
     }
