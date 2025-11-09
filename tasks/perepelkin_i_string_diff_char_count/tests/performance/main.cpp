@@ -31,6 +31,10 @@ class PerepelkinIStringDiffCharCountPerfTestProcesses : public ppc::util::BaseRu
       throw std::runtime_error("Failed to read second string from: " + file_path);
     }
 
+    // Fix end of file
+    trim_cr(str_1);
+    trim_cr(str_2);
+
     std::string extra_line;
     if (std::getline(file, extra_line) && !extra_line.empty()) {
       throw std::runtime_error("Unexpected extra data in: " + file_path + " (expected only two strings)");
@@ -46,6 +50,12 @@ class PerepelkinIStringDiffCharCountPerfTestProcesses : public ppc::util::BaseRu
 
   InType GetTestInputData() final {
     return input_data_;
+  }
+
+  static void trim_cr(std::string& s) {
+    if (!s.empty() && s.back() == '\r') {
+      s.pop_back();
+    }
   }
 };
 
