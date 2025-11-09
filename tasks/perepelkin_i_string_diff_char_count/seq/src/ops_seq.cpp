@@ -23,13 +23,15 @@ bool PerepelkinIStringDiffCharCountSEQ::RunImpl() {
   const size_t min_len = std::min(s1.size(), s2.size());
   const size_t max_len = std::max(s1.size(), s2.size());
 
-  int diff = 0;
-  for (size_t i = 0; i < min_len; ++i) {
-    if (s1[i] != s2[i]) diff++;
-  }
+  int diff = std::transform_reduce(
+    s1.begin(), s1.begin() + static_cast<std::ptrdiff_t>(min_len),
+    s2.begin(),
+    0,
+    std::plus<>(),
+    std::not_equal_to<>()
+  );
 
-  diff += static_cast<int>(max_len - min_len);
-  GetOutput() = diff;
+  GetOutput() = diff + (max_len - min_len);
   return true;
 }
 
