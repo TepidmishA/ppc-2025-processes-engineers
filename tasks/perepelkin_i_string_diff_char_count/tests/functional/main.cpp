@@ -46,7 +46,7 @@ class PerepelkinIStringDiffCharCountFuncTestProcesses : public ppc::util::BaseRu
       throw std::runtime_error("Failed to read second string from: " + file_path);
     }
 
-    // Fix end of file
+    // Fix for end of file
     trim_cr(str_1);
     trim_cr(str_2);
 
