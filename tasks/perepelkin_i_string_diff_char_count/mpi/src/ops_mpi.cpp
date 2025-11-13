@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <functional>
 #include <numeric>
+#include <string>
 
 #include "perepelkin_i_string_diff_char_count/common/include/common.hpp"
 
