@@ -42,17 +42,9 @@ bool PerepelkinIStringDiffCharCountMPI::RunImpl() {
   const int remainder = static_cast<int>(min_len % proc_num);
 
   // Calculate local range for this process
-  size_t local_start = 0;
-  size_t local_end = 0;
-  for (int i = 0; i < proc_num; i++) {
-    size_t current_size = base_size + (i < remainder ? 1 : 0);
-    if (i == proc_rank) {
-      local_start = local_end;
-      local_end = local_start + current_size;
-      break;
-    }
-    local_end += current_size;
-  }
+  const size_t local_size = base_size + (proc_rank < remainder ? 1 : 0);
+  const size_t local_start = (proc_rank * base_size) + std::min(proc_rank, remainder);
+  const size_t local_end = local_start + local_size;
 
   // Compute local number of differing characters
   auto s1_start = s1.begin() + static_cast<std::string::difference_type>(local_start);
