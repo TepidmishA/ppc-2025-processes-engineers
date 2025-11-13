@@ -61,9 +61,7 @@ bool PerepelkinIStringDiffCharCountMPI::RunImpl() {
 
   // Reduce (sum) differences for the common parts
   int global_diff = 0;
-  MPI_Request request = MPI_REQUEST_NULL;
-  MPI_Iallreduce(&local_diff, &global_diff, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD, &request);
-  MPI_Wait(&request, MPI_STATUS_IGNORE);
+  MPI_Allreduce(&local_diff, &global_diff, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = global_diff + static_cast<int>(max_len - min_len);
   return true;
