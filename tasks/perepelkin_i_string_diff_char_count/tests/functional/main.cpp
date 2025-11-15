@@ -91,13 +91,13 @@ TEST_P(PerepelkinIStringDiffCharCountFuncTestProcesses, StringDifFromFile) {
 }
 
 const std::array<TestType, 13> kTestParam = {
-    std::make_pair("first_empty.txt", 6),          std::make_pair("second_empty.txt", 6),
-    std::make_pair("empty_strings.txt", 0),        std::make_pair("identical_short.txt", 0),
-    std::make_pair("single_diff.txt", 1),          std::make_pair("diff_length_extra_chars.txt", 1),
-    std::make_pair("completely_different.txt", 4), std::make_pair("with_spaces.txt", 2),
-    std::make_pair("case_sensitive.txt", 1),       std::make_pair("long_strings_partial_diff.txt", 1),
-    std::make_pair("long_diff_tail.txt", 3),       std::make_pair("special_chars.txt", 1),
-    std::make_pair("mixed_length_utf8.txt", 1),
+    std::make_pair("test_first_empty.txt", 6),          std::make_pair("test_second_empty.txt", 6),
+    std::make_pair("test_empty_strings.txt", 0),        std::make_pair("test_identical_short.txt", 0),
+    std::make_pair("test_single_diff.txt", 1),          std::make_pair("test_diff_length_extra_chars.txt", 1),
+    std::make_pair("test_completely_different.txt", 4), std::make_pair("test_with_spaces.txt", 2),
+    std::make_pair("test_case_sensitive.txt", 1),       std::make_pair("test_long_strings_partial_diff.txt", 1),
+    std::make_pair("test_long_diff_tail.txt", 3),       std::make_pair("test_special_chars.txt", 1),
+    std::make_pair("test_mixed_length_utf8.txt", 1),
 };
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PerepelkinIStringDiffCharCountMPI, InType>(
