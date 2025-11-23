@@ -13,10 +13,15 @@ class PerepelkinIStringDiffCharCountMPI : public BaseTask {
   explicit PerepelkinIStringDiffCharCountMPI(const InType &in);
 
  private:
+  int proc_rank_{};
+  int proc_num_{};
+
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  void DistributeData(int min_len, std::vector<char> &local_s1, std::vector<char> &local_s2);
 };
 
 }  // namespace perepelkin_i_string_diff_char_count
