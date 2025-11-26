@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <functional>
 #include <numeric>
-#include <string>
+#include <vector>
 
 #include "perepelkin_i_string_diff_char_count/common/include/common.hpp"
 
@@ -32,13 +32,13 @@ bool PerepelkinIStringDiffCharCountMPI::PreProcessingImpl() {
 }
 
 bool PerepelkinIStringDiffCharCountMPI::RunImpl() {
-  int min_len = 0;
-  int max_len = 0;
+  size_t min_len = 0;
+  size_t max_len = 0;
 
   if (proc_rank_ == 0) {
     const auto &[s1, s2] = GetInput();
-    min_len = static_cast<int>(std::min(s1.size(), s2.size()));
-    max_len = static_cast<int>(std::max(s1.size(), s2.size()));
+    min_len = std::min(s1.size(), s2.size());
+    max_len = std::max(s1.size(), s2.size());
   }
 
   MPI_Bcast(&min_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -58,10 +58,10 @@ bool PerepelkinIStringDiffCharCountMPI::RunImpl() {
   return true;
 }
 
-void PerepelkinIStringDiffCharCountMPI::DistributeData(int min_len, std::vector<char> &local_s1,
+void PerepelkinIStringDiffCharCountMPI::DistributeData(size_t min_len, std::vector<char> &local_s1,
                                                        std::vector<char> &local_s2) {
-  const int base_size = min_len / proc_num_;
-  const int remainder = min_len % proc_num_;
+  const int base_size = static_cast<int>(min_len / proc_num_);
+  const int remainder = static_cast<int>(min_len % proc_num_);
 
   std::vector<int> counts(proc_num_);
   std::vector<int> displacements(proc_num_);
