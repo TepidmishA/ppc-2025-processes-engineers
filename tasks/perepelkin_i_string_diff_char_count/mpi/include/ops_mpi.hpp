@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstddef>
+#include <vector>
+
 #include "perepelkin_i_string_diff_char_count/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -21,7 +24,7 @@ class PerepelkinIStringDiffCharCountMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void DistributeData(int min_len, std::vector<char> &local_s1, std::vector<char> &local_s2);
+  void DistributeData(size_t min_len, std::vector<char> &local_s1, std::vector<char> &local_s2);
 };
 
 }  // namespace perepelkin_i_string_diff_char_count
