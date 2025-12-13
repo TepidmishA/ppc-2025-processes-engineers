@@ -5,12 +5,12 @@
 
 namespace perepelkin_i_matrix_mult_horizontal_strip_only_a {
 
-class PerepelkinIStringDiffCharCountSEQ : public BaseTask {
+class PerepelkinIMatrixMultHorizontalStripOnlyASEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit PerepelkinIStringDiffCharCountSEQ(const InType &in);
+  explicit PerepelkinIMatrixMultHorizontalStripOnlyASEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;

@@ -9,13 +9,13 @@
 
 namespace perepelkin_i_matrix_mult_horizontal_strip_only_a {
 
-PerepelkinIStringDiffCharCountSEQ::PerepelkinIStringDiffCharCountSEQ(const InType &in) {
+PerepelkinIMatrixMultHorizontalStripOnlyASEQ::PerepelkinIMatrixMultHorizontalStripOnlyASEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<std::vector<double>>();
 }
 
-bool PerepelkinIStringDiffCharCountSEQ::ValidationImpl() {
+bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::ValidationImpl() {
   const auto &[matrix_a, matrix_b] = GetInput();
 
   if (matrix_a.empty() || matrix_b.empty()) {
@@ -45,11 +45,11 @@ bool PerepelkinIStringDiffCharCountSEQ::ValidationImpl() {
   return (GetOutput() == std::vector<std::vector<double>>());
 }
 
-bool PerepelkinIStringDiffCharCountSEQ::PreProcessingImpl() {
+bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::PreProcessingImpl() {
   return true;
 }
 
-bool PerepelkinIStringDiffCharCountSEQ::RunImpl() {
+bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::RunImpl() {
   const auto &[matrix_a, matrix_b] = GetInput();
 
   const size_t height_a = matrix_a.size();
@@ -73,7 +73,7 @@ bool PerepelkinIStringDiffCharCountSEQ::RunImpl() {
   return true;
 }
 
-bool PerepelkinIStringDiffCharCountSEQ::PostProcessingImpl() {
+bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::PostProcessingImpl() {
   return true;
 }
 
