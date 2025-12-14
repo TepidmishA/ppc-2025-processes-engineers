@@ -37,7 +37,8 @@ class PerepelkinIMatrixMultHorizontalStripOnlyAPerfTestProcesses : public ppc::u
     return input_data_;
   }
 
-  static std::tuple<std::vector<std::vector<double>>, std::vector<std::vector<double>>, std::vector<std::vector<double>>>
+  static std::tuple<std::vector<std::vector<double>>, std::vector<std::vector<double>>,
+                    std::vector<std::vector<double>>>
   GenerateTestData(size_t rows_a, size_t cols_a, size_t cols_b, unsigned int seed) {
     std::mt19937 gen(seed);
     std::uniform_real_distribution<double> val_dist(-1000.0, 1000.0);

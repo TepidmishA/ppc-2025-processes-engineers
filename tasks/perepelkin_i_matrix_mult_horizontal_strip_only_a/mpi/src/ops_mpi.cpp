@@ -30,8 +30,7 @@ bool PerepelkinIMatrixMultHorizontalStripOnlyAMPI::ValidationImpl() {
 
     if (matrix_a.empty() || matrix_b.empty()) {
       is_valid = false;
-    }
-    else {
+    } else {
       const size_t width_a = matrix_a[0].size();
       const size_t width_b = matrix_b[0].size();
       const size_t height_b = matrix_b.size();
