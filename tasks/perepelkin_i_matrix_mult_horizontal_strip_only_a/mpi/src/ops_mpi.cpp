@@ -24,35 +24,40 @@ PerepelkinIMatrixMultHorizontalStripOnlyAMPI::PerepelkinIMatrixMultHorizontalStr
 }
 
 bool PerepelkinIMatrixMultHorizontalStripOnlyAMPI::ValidationImpl() {
+  bool is_valid = true;
   if (proc_rank_ == 0) {
     const auto &[matrix_a, matrix_b] = GetInput();
 
     if (matrix_a.empty() || matrix_b.empty()) {
-      return false;
+      is_valid = false;
     }
+    else {
+      const size_t width_a = matrix_a[0].size();
+      const size_t width_b = matrix_b[0].size();
+      const size_t height_b = matrix_b.size();
 
-    const size_t width_a = matrix_a[0].size();
-    const size_t width_b = matrix_b[0].size();
-    const size_t height_b = matrix_b.size();
-
-    if (width_a != height_b) {
-      return false;
-    }
-
-    for (size_t i = 1; i < matrix_a.size(); i++) {
-      if (matrix_a[i].size() != width_a) {
-        return false;
+      if (width_a != height_b) {
+        is_valid = false;
       }
-    }
 
-    for (size_t i = 1; i < matrix_b.size(); i++) {
-      if (matrix_b[i].size() != width_b) {
-        return false;
+      for (size_t i = 1; i < matrix_a.size(); i++) {
+        if (matrix_a[i].size() != width_a) {
+          is_valid = false;
+          break;
+        }
+      }
+
+      for (size_t i = 1; i < matrix_b.size(); i++) {
+        if (matrix_b[i].size() != width_b) {
+          is_valid = false;
+          break;
+        }
       }
     }
   }
 
-  return (GetOutput() == std::vector<std::vector<double>>());
+  MPI_Bcast(&is_valid, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+  return (is_valid && (GetOutput() == std::vector<std::vector<double>>()));
 }
 
 bool PerepelkinIMatrixMultHorizontalStripOnlyAMPI::PreProcessingImpl() {
