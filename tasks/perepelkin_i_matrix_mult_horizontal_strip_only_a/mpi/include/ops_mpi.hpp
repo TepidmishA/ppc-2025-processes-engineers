@@ -24,14 +24,13 @@ class PerepelkinIMatrixMultHorizontalStripOnlyAMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void PrepareRootData(int &height_a, int &width_a, int &width_b, std::vector<double> &flat_a,
-                       std::vector<double> &flat_b);
-  void BroadcastData(int &height_a, int &width_a, int &width_b, std::vector<double> &flat_b);
-  int DistributeMatrixA(int height_a, int width_a, std::vector<double> &local_a, std::vector<int> &rows_per_rank,
-                     const std::vector<double> &flat_a);
-  void GatherAndBroadcastResult(int height_a, int width_b, const std::vector<int> &rows_per_rank,
-                                const std::vector<double> &local_c, std::vector<double> &flat_c);
-  void PopulateOutput(int height_a, int width_b, const std::vector<double> &flat_c);
+  void BcastMatrixSizes(size_t &height_a, size_t &width_a, size_t &height_b, size_t &width_b);
+  void BcastMatrixB(const size_t &height_b, const size_t &width_b, std::vector<double> &flat_b);
+  int DistributeMatrixA(const size_t &height_a, const size_t &width_a, std::vector<double> &local_a,
+                        std::vector<int> &rows_per_rank);
+  void GatherAndBcastResult(const size_t &height_a, const size_t &width_b, const std::vector<int> &rows_per_rank,
+                            const std::vector<double> &local_c, std::vector<double> &flat_c);
+  void PrepareOutput(const size_t &height_a, const size_t &width_b, const std::vector<double> &flat_c);
 };
 
 }  // namespace perepelkin_i_matrix_mult_horizontal_strip_only_a
