@@ -46,27 +46,41 @@ bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::ValidationImpl() {
 }
 
 bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::PreProcessingImpl() {
+  const auto &[matrix_a, matrix_b] = GetInput();
+
+  // Store original sizes
+  height_a_ = matrix_a.size();
+  height_b_ = matrix_b.size();
+  width_a_ = matrix_a[0].size();
+  width_b_ = matrix_b[0].size();
+
+  // Flatten matrix A
+  flat_a_.reserve(width_a_ * height_a_);
+  for (const auto &row : matrix_a) {
+    flat_a_.insert(flat_a_.end(), row.begin(), row.end());
+  }
+
+  // Create transposed-and-flattened matrix B
+  flat_b_t_.reserve(width_b_ * width_a_);
+  for (size_t r = 0; r < width_a_; r++) {
+    for (size_t c = 0; c < width_b_; c++) {
+      flat_b_t_[c * width_a_ + r] = matrix_b[r][c];
+    }
+  }
+
   return true;
 }
 
 bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::RunImpl() {
-  const auto &[matrix_a, matrix_b] = GetInput();
-
-  const size_t height_a = matrix_a.size();
-  const size_t width_a = matrix_a[0].size();
-  const size_t width_b = matrix_b[0].size();
-
   auto &output = GetOutput();
-  output = std::vector<std::vector<double>>(height_a, std::vector<double>(width_b, 0.0));
+  output = std::vector<std::vector<double>>(height_a_, std::vector<double>(width_b_));
 
-  double tmp;
-  for (size_t i = 0; i < height_a; i++) {
-    for (size_t j = 0; j < width_b; j++) {
-      tmp = 0.0;
-      for (size_t k = 0; k < width_a; k++) {
-        tmp += matrix_a[i][k] * matrix_b[k][j];
-      }
-      output[i][j] = tmp;
+  for (size_t i = 0; i < height_a_; ++i) {
+    const auto a_it = flat_a_.begin() + i * width_a_;
+    const auto a_end = a_it + width_a_;
+    for (size_t j = 0; j < width_b_; ++j) {
+      const auto b_it = flat_b_t_.begin() + j * width_a_;
+      output[i][j] = std::transform_reduce(a_it, a_end, b_it, 0.0, std::plus<>(), std::multiplies<>());
     }
   }
 
