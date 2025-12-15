@@ -19,18 +19,25 @@ class PerepelkinIMatrixMultHorizontalStripOnlyAMPI : public BaseTask {
   int proc_rank_{};
   int proc_num_{};
 
+  size_t height_a_{};
+  size_t height_b_{};
+  size_t width_a_{};
+  size_t width_b_{};
+
+  std::vector<double> flat_a_;
+  std::vector<double> flat_b_t_;
+  std::vector<double> flat_c_;
+
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void BcastMatrixSizes(size_t &height_a, size_t &width_a, size_t &height_b, size_t &width_b);
-  void BcastMatrixB(const size_t &height_b, const size_t &width_b, std::vector<double> &flat_b);
-  int DistributeMatrixA(const size_t &height_a, const size_t &width_a, std::vector<double> &local_a,
-                        std::vector<int> &rows_per_rank);
-  void GatherAndBcastResult(const size_t &height_a, const size_t &width_b, const std::vector<int> &rows_per_rank,
-                            const std::vector<double> &local_c, std::vector<double> &flat_c);
-  void PrepareOutput(const size_t &height_a, const size_t &width_b, const std::vector<double> &flat_c);
+  void BcastMatrixSizes();
+  void BcastMatrixB();
+  int DistributeMatrixA(std::vector<double> &local_a, std::vector<int> &rows_per_rank);
+  void GatherAndBcastResult(const std::vector<int> &rows_per_rank,
+                            const std::vector<double> &local_c);
 };
 
 }  // namespace perepelkin_i_matrix_mult_horizontal_strip_only_a

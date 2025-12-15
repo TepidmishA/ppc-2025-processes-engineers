@@ -56,102 +56,88 @@ bool PerepelkinIMatrixMultHorizontalStripOnlyAMPI::ValidationImpl() {
   }
 
   MPI_Bcast(&is_valid, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-  return (is_valid && (GetOutput() == std::vector<std::vector<double>>()));
+  return (is_valid && GetOutput().empty());
 }
 
 bool PerepelkinIMatrixMultHorizontalStripOnlyAMPI::PreProcessingImpl() {
+  if (proc_rank_ == 0) {
+    const auto &[matrix_a, matrix_b] = GetInput();
+
+    // Store original sizes on root
+    height_a_ = matrix_a.size();
+    height_b_ = matrix_b.size();
+    width_a_ = matrix_a[0].size();
+    width_b_ = matrix_b[0].size();
+
+    // Flatten matrix A
+    flat_a_.reserve(width_a_ * height_a_);
+    for (const auto &row : matrix_a) {
+      flat_a_.insert(flat_a_.end(), row.begin(), row.end());
+    }
+
+    // Create transposed-and-flattened matrix B
+    flat_b_t_.reserve(width_b_ * width_a_);
+    for (size_t r = 0; r < width_a_; r++) {
+      for (size_t c = 0; c < width_b_; c++) {
+        flat_b_t_[(c * width_a_) + r] = matrix_b[r][c];
+      }
+    }
+  }
+
   return true;
 }
 
 bool PerepelkinIMatrixMultHorizontalStripOnlyAMPI::RunImpl() {
-  // [1] Broadcast matrix sizes
-  size_t height_a = 0;
-  size_t height_b = 0;
-  size_t width_a = 0;
-  size_t width_b = 0;
+  // [1] Broadcast matrix sizes and matrix B
+  BcastMatrixSizes();
+  BcastMatrixB();
 
-  BcastMatrixSizes(height_a, width_a, height_b, width_b);
-
-  // [2] Broadcast matrix B
-  std::vector<double> flat_b;
-  BcastMatrixB(height_b, width_b, flat_b);
-
-  // [3] Distribute matrix A
+  // [2] Distribute matrix A
   std::vector<double> local_a;
   std::vector<int> rows_per_rank;
-  const size_t local_rows = DistributeMatrixA(height_a, width_a, local_a, rows_per_rank);
+  const size_t local_rows = DistributeMatrixA(local_a, rows_per_rank);
 
-  // [4] Local computation of matrix C
-  std::vector<double> local_c(local_rows * width_b);
+  // [3] Local computation of matrix C
+  std::vector<double> local_c(local_rows * width_b_);
   for (size_t row_a = 0; row_a < local_rows; row_a++) {
-    const size_t row_offset = row_a * width_a;
+    const auto a_it = local_a.begin() + row_a * width_a_;
+    const auto a_end = a_it + width_a_;
 
-    for (size_t col_b = 0; col_b < width_b; col_b++) {
-      double tmp_sum = 0.0;
-
-      for (size_t i = 0; i < width_a; i++) {
-        tmp_sum += local_a[row_offset + i] * flat_b[i * width_b + col_b];
-      }
-      local_c[row_a * width_b + col_b] = tmp_sum;
+    for (size_t col_b = 0; col_b < width_b_; col_b++) {
+      const auto b_it = flat_b_t_.begin() + col_b * width_a_;
+      local_c[(row_a * width_b_) + col_b] =
+          std::transform_reduce(a_it, a_end, b_it, 0.0, std::plus<>(), std::multiplies<>());
     }
   }
 
-  // [5] Gather local results
-  std::vector<double> flat_c;
-  GatherAndBcastResult(height_a, width_b, rows_per_rank, local_c, flat_c);
-
-  // [6] Convert flat matrix C to output format
-  PrepareOutput(height_a, width_b, flat_c);
+  // [4] Gather local results
+  GatherAndBcastResult(rows_per_rank, local_c);
   return true;
 }
 
-void PerepelkinIMatrixMultHorizontalStripOnlyAMPI::BcastMatrixSizes(size_t &height_a, size_t &width_a, size_t &height_b,
-                                                                    size_t &width_b) {
-  if (proc_rank_ == 0) {
-    const auto &[matrix_a, matrix_b] = GetInput();
-    height_a = matrix_a.size();
-    height_b = matrix_b.size();
-    width_a = matrix_a[0].size();
-    width_b = matrix_b[0].size();
-  }
-
-  MPI_Bcast(&height_a, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&height_b, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&width_a, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&width_b, 1, MPI_INT, 0, MPI_COMM_WORLD);
+void PerepelkinIMatrixMultHorizontalStripOnlyAMPI::BcastMatrixSizes() {
+  MPI_Bcast(&height_a_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&height_b_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&width_a_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&width_b_, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
-void PerepelkinIMatrixMultHorizontalStripOnlyAMPI::BcastMatrixB(const size_t &height_b, const size_t &width_b,
-                                                                std::vector<double> &flat_b) {
-  const size_t total_b = height_b * width_b;
+void PerepelkinIMatrixMultHorizontalStripOnlyAMPI::BcastMatrixB() {
+  const size_t total_t = width_b_ * height_b_;
 
-  if (proc_rank_ == 0) {
-    const auto &[matrix_a, matrix_b] = GetInput();
-    for (const auto &row : matrix_b) {
-      flat_b.insert(flat_b.end(), row.begin(), row.end());
-    }
-  } else {
-    flat_b.reserve(total_b);
+  if (proc_rank_ != 0) {
+    flat_b_t_.reserve(total_t);
   }
 
-  MPI_Bcast(flat_b.data(), static_cast<int>(total_b), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(flat_b_t_.data(), static_cast<int>(total_t), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
-int PerepelkinIMatrixMultHorizontalStripOnlyAMPI::DistributeMatrixA(const size_t &height_a, const size_t &width_a,
-                                                                    std::vector<double> &local_a,
+int PerepelkinIMatrixMultHorizontalStripOnlyAMPI::DistributeMatrixA(std::vector<double> &local_a,
                                                                     std::vector<int> &rows_per_rank) {
-  std::vector<double> flat_a;
-  if (proc_rank_ == 0) {
-    const auto &[matrix_a, matrix_b] = GetInput();
-    for (const auto &row : matrix_a) {
-      flat_a.insert(flat_a.end(), row.begin(), row.end());
-    }
-  }
-
   // Determine rows per rank
   rows_per_rank.reserve(proc_num_);
-  const int base_rows = static_cast<int>(height_a / proc_num_);
-  const int remainder_rows = static_cast<int>(height_a % proc_num_);
+  const int base_rows = static_cast<int>(height_a_ / proc_num_);
+  const int remainder_rows = static_cast<int>(height_a_ % proc_num_);
   for (int i = 0; i < proc_num_; i++) {
     rows_per_rank[i] = base_rows + (i < remainder_rows ? 1 : 0);
   }
@@ -159,53 +145,47 @@ int PerepelkinIMatrixMultHorizontalStripOnlyAMPI::DistributeMatrixA(const size_t
   // Prepare counts and displacements
   std::vector<int> counts(proc_num_);
   std::vector<int> displacements(proc_num_);
-  if (proc_rank_ == 0) {
-    for (int i = 0, offset = 0; i < proc_num_; i++) {
-      counts[i] = rows_per_rank[i] * static_cast<int>(width_a);
-      displacements[i] = offset;
-      offset += counts[i];
-    }
-  }
-
-  const int local_a_size = rows_per_rank[proc_rank_] * static_cast<int>(width_a);
-  local_a.resize(local_a_size);
-
-  MPI_Scatterv(flat_a.data(), counts.data(), displacements.data(), MPI_DOUBLE, local_a.data(), local_a_size, MPI_DOUBLE,
-               0, MPI_COMM_WORLD);
-
-  return rows_per_rank[proc_rank_];
-}
-
-void PerepelkinIMatrixMultHorizontalStripOnlyAMPI::GatherAndBcastResult(const size_t &height_a, const size_t &width_b,
-                                                                        const std::vector<int> &rows_per_rank,
-                                                                        const std::vector<double> &local_c,
-                                                                        std::vector<double> &flat_c) {
-  std::vector<int> counts(proc_num_);
-  std::vector<int> displacements(proc_num_);
   for (int i = 0, offset = 0; i < proc_num_; i++) {
-    counts[i] = rows_per_rank[i] * width_b;
+    counts[i] = rows_per_rank[i] * static_cast<int>(width_a_);
     displacements[i] = offset;
     offset += counts[i];
   }
 
-  flat_c.reserve(height_a * width_b);
-  MPI_Allgatherv(local_c.data(), counts[proc_rank_], MPI_DOUBLE, flat_c.data(), counts.data(), displacements.data(),
+  const int local_a_size = rows_per_rank[proc_rank_] * static_cast<int>(width_a_);
+  local_a.reserve(local_a_size);
+
+  MPI_Scatterv(flat_a_.data(), counts.data(), displacements.data(), MPI_DOUBLE,
+               local_a.data(), local_a_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  return rows_per_rank[proc_rank_];
+}
+
+void PerepelkinIMatrixMultHorizontalStripOnlyAMPI::GatherAndBcastResult(const std::vector<int> &rows_per_rank,
+                                                                        const std::vector<double> &local_c) {
+  std::vector<int> counts(proc_num_);
+  std::vector<int> displacements(proc_num_);
+  for (int i = 0, offset = 0; i < proc_num_; i++) {
+    counts[i] = rows_per_rank[i] * static_cast<int>(width_b_);
+    displacements[i] = offset;
+    offset += counts[i];
+  }
+
+  flat_c_.reserve(height_a_ * width_b_);
+
+  MPI_Allgatherv(local_c.data(), counts[proc_rank_], MPI_DOUBLE, flat_c_.data(), counts.data(), displacements.data(),
                  MPI_DOUBLE, MPI_COMM_WORLD);
 }
 
-void PerepelkinIMatrixMultHorizontalStripOnlyAMPI::PrepareOutput(const size_t &height_a, const size_t &width_b,
-                                                                 const std::vector<double> &flat_c) {
+bool PerepelkinIMatrixMultHorizontalStripOnlyAMPI::PostProcessingImpl() {
   auto &output = GetOutput();
-  output.assign(height_a, std::vector<double>(width_b));
+  output.assign(height_a_, std::vector<double>(width_b_));
 
-  for (size_t i = 0; i < height_a; i++) {
-    for (size_t j = 0; j < width_b; j++) {
-      output[i][j] = flat_c[i * width_b + j];
+  for (size_t i = 0; i < height_a_; i++) {
+    for (size_t j = 0; j < width_b_; j++) {
+      output[i][j] = flat_c_[(i * width_b_) + j];
     }
   }
-}
 
-bool PerepelkinIMatrixMultHorizontalStripOnlyAMPI::PostProcessingImpl() {
   return true;
 }
 
