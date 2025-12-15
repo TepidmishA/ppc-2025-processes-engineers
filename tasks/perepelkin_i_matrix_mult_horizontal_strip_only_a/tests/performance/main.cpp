@@ -5,7 +5,6 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <iostream>
 
 #include "perepelkin_i_matrix_mult_horizontal_strip_only_a/common/include/common.hpp"
 #include "perepelkin_i_matrix_mult_horizontal_strip_only_a/mpi/include/ops_mpi.hpp"
@@ -17,7 +16,7 @@ namespace perepelkin_i_matrix_mult_horizontal_strip_only_a {
 class PerepelkinIMatrixMultHorizontalStripOnlyAPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   InType input_data_;
-  OutType expected_ ;
+  OutType expected_;
 
   size_t rows_a_ = 1000;
   size_t cols_a_ = 1000;
@@ -25,9 +24,9 @@ class PerepelkinIMatrixMultHorizontalStripOnlyAPerfTestProcesses : public ppc::u
   unsigned int seed_ = 42;
 
   void SetUp() override {
-    const auto &[matrix_A, matrix_B, matrix_C] = GenerateTestData(rows_a_, cols_a_, cols_b_, seed_);
-    input_data_ = std::make_pair(matrix_A, matrix_B);
-    expected_ = matrix_C;
+    const auto &[matrix_a, matrix_b, matrix_c] = GenerateTestData(rows_a_, cols_a_, cols_b_, seed_);
+    input_data_ = std::make_pair(matrix_a, matrix_b);
+    expected_ = matrix_c;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -44,34 +43,34 @@ class PerepelkinIMatrixMultHorizontalStripOnlyAPerfTestProcesses : public ppc::u
     std::mt19937 gen(seed);
     std::uniform_int_distribution<int> val_dist(-1000, 1000);
 
-    std::vector<std::vector<double>> matrix_A(rows_a, std::vector<double>(cols_a));
-    std::vector<std::vector<double>> matrix_B(cols_a, std::vector<double>(cols_b));
+    std::vector<std::vector<double>> matrix_a(rows_a, std::vector<double>(cols_a));
+    std::vector<std::vector<double>> matrix_b(cols_a, std::vector<double>(cols_b));
 
     for (size_t i = 0; i < rows_a; ++i) {
       for (size_t j = 0; j < cols_a; ++j) {
-        matrix_A[i][j] = static_cast<double>(val_dist(gen));
+        matrix_a[i][j] = static_cast<double>(val_dist(gen));
       }
     }
 
     for (size_t i = 0; i < cols_a; ++i) {
       for (size_t j = 0; j < cols_b; ++j) {
-        matrix_B[i][j] = static_cast<double>(val_dist(gen));
+        matrix_b[i][j] = static_cast<double>(val_dist(gen));
       }
     }
 
-    std::vector<std::vector<double>> matrix_C(rows_a, std::vector<double>(cols_b, 0.0));
+    std::vector<std::vector<double>> matrix_c(rows_a, std::vector<double>(cols_b, 0.0));
 
     for (size_t i = 0; i < rows_a; i++) {
       for (size_t j = 0; j < cols_b; j++) {
         double tmp = 0.0;
         for (size_t k = 0; k < cols_a; k++) {
-          tmp += matrix_A[i][k] * matrix_B[k][j];
+          tmp += matrix_a[i][k] * matrix_b[k][j];
         }
-        matrix_C[i][j] = tmp;
+        matrix_c[i][j] = tmp;
       }
     }
 
-    return {matrix_A, matrix_B, matrix_C};
+    return {matrix_a, matrix_b, matrix_c};
   }
 };
 

@@ -1,7 +1,9 @@
 #pragma once
 
-#include "perepelkin_i_matrix_mult_horizontal_strip_only_a/common/include/common.hpp"
+#include <cstddef>
 #include <vector>
+
+#include "perepelkin_i_matrix_mult_horizontal_strip_only_a/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace perepelkin_i_matrix_mult_horizontal_strip_only_a {
@@ -14,8 +16,8 @@ class PerepelkinIMatrixMultHorizontalStripOnlyASEQ : public BaseTask {
   explicit PerepelkinIMatrixMultHorizontalStripOnlyASEQ(const InType &in);
 
  private:
-  std::vector<double> flat_a_{};
-  std::vector<double> flat_b_t_{};
+  std::vector<double> flat_a_;
+  std::vector<double> flat_b_t_;
   size_t height_a_ = 0;
   size_t height_b_ = 0;
   size_t width_a_ = 0;

@@ -2,8 +2,6 @@
 
 #include <array>
 #include <cstddef>
-#include <fstream>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -41,8 +39,8 @@ class PerepelkinIMatrixMultHorizontalStripOnlyAFuncTestProcesses
   }
 
  private:
-  InType input_data_{};
-  OutType expected_{};
+  InType input_data_;
+  OutType expected_;
 };
 
 namespace {

@@ -33,11 +33,13 @@ class PerepelkinIMatrixMultHorizontalStripOnlyAMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
+  bool RootValidationImpl();
+  bool CheckConsistentRowWidths(const std::vector<std::vector<double>> &m, size_t expected_width);
+
   void BcastMatrixSizes();
   void BcastMatrixB();
   int DistributeMatrixA(std::vector<double> &local_a, std::vector<int> &rows_per_rank);
-  void GatherAndBcastResult(const std::vector<int> &rows_per_rank,
-                            const std::vector<double> &local_c);
+  void GatherAndBcastResult(const std::vector<int> &rows_per_rank, const std::vector<double> &local_c);
 };
 
 }  // namespace perepelkin_i_matrix_mult_horizontal_strip_only_a

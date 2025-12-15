@@ -1,9 +1,9 @@
 #include "perepelkin_i_matrix_mult_horizontal_strip_only_a/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <numeric>
+#include <vector>
 
 #include "perepelkin_i_matrix_mult_horizontal_strip_only_a/common/include/common.hpp"
 
@@ -42,7 +42,7 @@ bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::ValidationImpl() {
     }
   }
 
-  return (GetOutput() == std::vector<std::vector<double>>());
+  return GetOutput().empty();
 }
 
 bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::PreProcessingImpl() {
@@ -61,10 +61,10 @@ bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::PreProcessingImpl() {
   }
 
   // Create transposed-and-flattened matrix B
-  flat_b_t_.reserve(width_b_ * width_a_);
-  for (size_t r = 0; r < width_a_; r++) {
-    for (size_t c = 0; c < width_b_; c++) {
-      flat_b_t_[c * width_a_ + r] = matrix_b[r][c];
+  flat_b_t_.resize(width_b_ * height_b_);
+  for (size_t row = 0; row < height_b_; row++) {
+    for (size_t col = 0; col < width_b_; col++) {
+      flat_b_t_[(col * height_b_) + row] = matrix_b[row][col];
     }
   }
 
@@ -76,10 +76,10 @@ bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::RunImpl() {
   output = std::vector<std::vector<double>>(height_a_, std::vector<double>(width_b_));
 
   for (size_t i = 0; i < height_a_; ++i) {
-    const auto a_it = flat_a_.begin() + i * width_a_;
-    const auto a_end = a_it + width_a_;
+    const auto a_it = flat_a_.begin() + static_cast<DiffT>(i * width_a_);
+    const auto a_end = a_it + static_cast<DiffT>(width_a_);
     for (size_t j = 0; j < width_b_; ++j) {
-      const auto b_it = flat_b_t_.begin() + j * width_a_;
+      const auto b_it = flat_b_t_.begin() + static_cast<DiffT>(j * width_a_);
       output[i][j] = std::transform_reduce(a_it, a_end, b_it, 0.0, std::plus<>(), std::multiplies<>());
     }
   }
