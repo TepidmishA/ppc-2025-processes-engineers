@@ -73,7 +73,10 @@ bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::PreProcessingImpl() {
 
 bool PerepelkinIMatrixMultHorizontalStripOnlyASEQ::RunImpl() {
   auto &output = GetOutput();
-  output = std::vector<std::vector<double>>(height_a_, std::vector<double>(width_b_));
+  output.resize(height_a_);
+  for (auto &row : output) {
+    row.resize(width_b_);
+  }
 
   for (size_t i = 0; i < height_a_; ++i) {
     const auto a_it = flat_a_.begin() + static_cast<DiffT>(i * width_a_);

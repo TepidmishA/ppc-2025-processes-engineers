@@ -187,7 +187,10 @@ void PerepelkinIMatrixMultHorizontalStripOnlyAMPI::GatherAndBcastResult(const st
 
 bool PerepelkinIMatrixMultHorizontalStripOnlyAMPI::PostProcessingImpl() {
   auto &output = GetOutput();
-  output.assign(height_a_, std::vector<double>(width_b_));
+  output.resize(height_a_);
+  for (auto &row : output) {
+    row.resize(width_b_);
+  }
 
   for (size_t i = 0; i < height_a_; i++) {
     for (size_t j = 0; j < width_b_; j++) {
