@@ -34,7 +34,7 @@ class PerepelkinIMatrixMultHorizontalStripOnlyAMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
   bool RootValidationImpl();
-  bool CheckConsistentRowWidths(const std::vector<std::vector<double>> &m, size_t expected_width);
+  static bool CheckConsistentRowWidths(const std::vector<std::vector<double>> &m, size_t expected_width);
 
   void BcastMatrixSizes();
   void BcastMatrixB();
