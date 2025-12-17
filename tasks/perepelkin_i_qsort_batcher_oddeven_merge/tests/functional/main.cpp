@@ -7,15 +7,15 @@
 #include <tuple>
 #include <vector>
 
-#include "perepelkin_i_batcher_oddeven_mergesort/common/include/common.hpp"
-#include "perepelkin_i_batcher_oddeven_mergesort/mpi/include/ops_mpi.hpp"
-#include "perepelkin_i_batcher_oddeven_mergesort/seq/include/ops_seq.hpp"
+#include "perepelkin_i_qsort_batcher_oddeven_merge/common/include/common.hpp"
+#include "perepelkin_i_qsort_batcher_oddeven_merge/mpi/include/ops_mpi.hpp"
+#include "perepelkin_i_qsort_batcher_oddeven_merge/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace perepelkin_i_batcher_oddeven_mergesort {
+namespace perepelkin_i_qsort_batcher_oddeven_merge {
 
-class PerepelkinIBatcherOddEvenMergeSortFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class PerepelkinIQsortBatcherOddEvenMergeFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return test_param.first;
@@ -43,7 +43,7 @@ class PerepelkinIBatcherOddEvenMergeSortFuncTests : public ppc::util::BaseRunFun
 
 namespace {
 
-TEST_P(PerepelkinIBatcherOddEvenMergeSortFuncTests, SortsCorrectly) {
+TEST_P(PerepelkinIQsortBatcherOddEvenMergeFuncTests, SortsCorrectly) {
   ExecuteTest(GetParam());
 }
 
@@ -57,18 +57,19 @@ const std::array<TestType, 7> kTestParams = {
     std::make_pair("odd_size", std::vector<double>{10.0, 3.0, 5.0, 7.0, 2.0, 8.0, 6.0}),
 };
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PerepelkinIBatcherOddEvenMergeSortMPI, InType>(
-                                               kTestParams, PPC_SETTINGS_perepelkin_i_batcher_oddeven_mergesort),
-                                           ppc::util::AddFuncTask<PerepelkinIBatcherOddEvenMergeSortSEQ, InType>(
-                                               kTestParams, PPC_SETTINGS_perepelkin_i_batcher_oddeven_mergesort));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<PerepelkinIQsortBatcherOddEvenMergeMPI, InType>(
+                       kTestParams, PPC_SETTINGS_perepelkin_i_qsort_batcher_oddeven_merge),
+                   ppc::util::AddFuncTask<PerepelkinIQsortBatcherOddEvenMergeSEQ, InType>(
+                       kTestParams, PPC_SETTINGS_perepelkin_i_qsort_batcher_oddeven_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kFuncTestName =
-    PerepelkinIBatcherOddEvenMergeSortFuncTests::PrintFuncTestName<PerepelkinIBatcherOddEvenMergeSortFuncTests>;
+    PerepelkinIQsortBatcherOddEvenMergeFuncTests::PrintFuncTestName<PerepelkinIQsortBatcherOddEvenMergeFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(SortTests, PerepelkinIBatcherOddEvenMergeSortFuncTests, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(SortTests, PerepelkinIQsortBatcherOddEvenMergeFuncTests, kGtestValues, kFuncTestName);
 
 }  // namespace
 
-}  // namespace perepelkin_i_batcher_oddeven_mergesort
+}  // namespace perepelkin_i_qsort_batcher_oddeven_merge

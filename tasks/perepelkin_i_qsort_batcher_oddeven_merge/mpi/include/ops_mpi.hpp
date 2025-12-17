@@ -3,17 +3,17 @@
 #include <cstddef>
 #include <vector>
 
-#include "perepelkin_i_batcher_oddeven_mergesort/common/include/common.hpp"
+#include "perepelkin_i_qsort_batcher_oddeven_merge/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace perepelkin_i_batcher_oddeven_mergesort {
+namespace perepelkin_i_qsort_batcher_oddeven_merge {
 
-class PerepelkinIBatcherOddEvenMergeSortMPI : public BaseTask {
+class PerepelkinIQsortBatcherOddEvenMergeMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit PerepelkinIBatcherOddEvenMergeSortMPI(const InType &in);
+  explicit PerepelkinIQsortBatcherOddEvenMergeMPI(const InType &in);
 
  private:
   int proc_rank_{};
@@ -37,4 +37,4 @@ class PerepelkinIBatcherOddEvenMergeSortMPI : public BaseTask {
   void BuildStageB(const std::vector<int> &procs, std::vector<std::pair<int, int>> &comparators) const;
 };
 
-}  // namespace perepelkin_i_batcher_oddeven_mergesort
+}  // namespace perepelkin_i_qsort_batcher_oddeven_merge

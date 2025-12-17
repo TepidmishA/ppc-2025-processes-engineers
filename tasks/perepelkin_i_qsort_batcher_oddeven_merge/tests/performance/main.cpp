@@ -6,14 +6,14 @@
 #include <tuple>
 #include <vector>
 
-#include "perepelkin_i_batcher_oddeven_mergesort/common/include/common.hpp"
-#include "perepelkin_i_batcher_oddeven_mergesort/mpi/include/ops_mpi.hpp"
-#include "perepelkin_i_batcher_oddeven_mergesort/seq/include/ops_seq.hpp"
+#include "perepelkin_i_qsort_batcher_oddeven_merge/common/include/common.hpp"
+#include "perepelkin_i_qsort_batcher_oddeven_merge/mpi/include/ops_mpi.hpp"
+#include "perepelkin_i_qsort_batcher_oddeven_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace perepelkin_i_batcher_oddeven_mergesort {
+namespace perepelkin_i_qsort_batcher_oddeven_merge {
 
-class PerepelkinIBatcherOddEvenMergeSortPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class PerepelkinIQsortBatcherOddEvenMergePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   InType input_data_;
   OutType expected_output_;
@@ -54,18 +54,18 @@ class PerepelkinIBatcherOddEvenMergeSortPerfTests : public ppc::util::BaseRunPer
   }
 };
 
-TEST_P(PerepelkinIBatcherOddEvenMergeSortPerfTests, RunPerfModes) {
+TEST_P(PerepelkinIQsortBatcherOddEvenMergePerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PerepelkinIBatcherOddEvenMergeSortMPI, PerepelkinIBatcherOddEvenMergeSortSEQ>(
-        PPC_SETTINGS_perepelkin_i_batcher_oddeven_mergesort);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PerepelkinIQsortBatcherOddEvenMergeMPI,
+                                                       PerepelkinIQsortBatcherOddEvenMergeSEQ>(
+    PPC_SETTINGS_perepelkin_i_qsort_batcher_oddeven_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = PerepelkinIBatcherOddEvenMergeSortPerfTests::CustomPerfTestName;
+const auto kPerfTestName = PerepelkinIQsortBatcherOddEvenMergePerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, PerepelkinIBatcherOddEvenMergeSortPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, PerepelkinIQsortBatcherOddEvenMergePerfTests, kGtestValues, kPerfTestName);
 
-}  // namespace perepelkin_i_batcher_oddeven_mergesort
+}  // namespace perepelkin_i_qsort_batcher_oddeven_merge
