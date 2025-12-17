@@ -4,9 +4,11 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdlib>
 #include <functional>
 #include <limits>
 #include <numeric>
+#include <utility>
 #include <vector>
 
 #include "perepelkin_i_batcher_oddeven_mergesort/common/include/common.hpp"
@@ -57,27 +59,31 @@ bool PerepelkinIBatcherOddEvenMergeSortMPI::RunImpl() {
   std::vector<double> local_data;
   DistributeData(padded_size, padded_input, counts, displs, local_data);
 
-  // [3] Each process sorts its local data
-  if (local_data.size() > 1) {
-    OddEvenMergeSort(local_data, 0, local_data.size());
+  // [3] Local sort
+  if (!local_data.empty()) {
+    std::sort(local_data.begin(), local_data.end());
   }
 
-  // [4] Gather sorted data at root and perform final merge
+  // [4] Global merge via comparator network
+  std::vector<std::pair<int, int>> comparators;
+  BuildComparators(comparators);
+  ProcessComparators(counts, local_data, comparators);
+
+  // [5] Gather result on root
   std::vector<double> gathered;
   if (proc_rank_ == 0) {
     gathered.resize(padded_size);
   }
 
-  MPI_Gatherv(local_data.data(), local_data.size(), MPI_DOUBLE, gathered.data(), counts.data(), displs.data(), MPI_DOUBLE, 0,
-              MPI_COMM_WORLD);
+  MPI_Gatherv(local_data.data(), static_cast<int>(local_data.size()), MPI_DOUBLE, gathered.data(), counts.data(), displs.data(),
+              MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   if (proc_rank_ == 0) {
-    OddEvenMergeSort(gathered, 0, gathered.size());
     gathered.resize(original_size);
-    GetOutput() = gathered;   // TODO try std::move
+    GetOutput() = std::move(gathered);
   }
 
-  // [5] Bcast output to all processes
+  // [6] Bcast output to all processes
   GetOutput().resize(original_size);
   MPI_Bcast(GetOutput().data(), original_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
@@ -87,19 +93,12 @@ bool PerepelkinIBatcherOddEvenMergeSortMPI::RunImpl() {
 void PerepelkinIBatcherOddEvenMergeSortMPI::BcastSizes(size_t &original_size, size_t &padded_size) {
   if (proc_rank_ == 0) {
     original_size = GetInput().size();
-    padded_size = NextPowerOfTwo(original_size);
+    const size_t remainder = original_size % proc_num_;
+    padded_size = original_size + (remainder == 0 ? 0 : (proc_num_ - remainder));
   }
 
   MPI_Bcast(&original_size, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
   MPI_Bcast(&padded_size, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
-}
-
-size_t PerepelkinIBatcherOddEvenMergeSortMPI::NextPowerOfTwo(const size_t &value) {
-  size_t result = 1;
-  while (result < value) {
-    result <<= 1U;
-  }
-  return result;
 }
 
 void PerepelkinIBatcherOddEvenMergeSortMPI::DistributeData(const size_t &padded_size, const std::vector<double> &padded_input,
@@ -124,30 +123,129 @@ void PerepelkinIBatcherOddEvenMergeSortMPI::DistributeData(const size_t &padded_
                MPI_COMM_WORLD);
 }
 
-void PerepelkinIBatcherOddEvenMergeSortMPI::OddEvenMergeSort(std::vector<double> &data, const size_t left, const size_t size) {
-  if (size <= 1) {
+void PerepelkinIBatcherOddEvenMergeSortMPI::BuildComparators(std::vector<std::pair<int, int>> &comparators) const {
+  std::vector<int> procs(proc_num_);
+  std::iota(procs.begin(), procs.end(), 0);
+  BuildStageB(procs, comparators);
+}
+
+void PerepelkinIBatcherOddEvenMergeSortMPI::BuildStageS(const std::vector<int> &procs_up, const std::vector<int> &procs_down,
+                                                        std::vector<std::pair<int, int>> &comparators) const {
+  const size_t proc_count = procs_up.size() + procs_down.size();
+  if (proc_count == 1) {
+    return;
+  }
+  if (proc_count == 2) {
+    comparators.emplace_back(procs_up.front(), procs_down.front());
     return;
   }
 
-  const size_t mid = size / 2;
-  OddEvenMergeSort(data, left, mid);
-  OddEvenMergeSort(data, left + mid, mid);
-  OddEvenMerge(data, left, size, 1);
+  std::vector<int> procs_up_odd;
+  std::vector<int> procs_up_even;
+  std::vector<int> procs_down_odd;
+  std::vector<int> procs_down_even;
+
+  for (size_t i = 0; i < procs_up.size(); ++i) {
+    if (i % 2 == 0) {
+      procs_up_odd.push_back(procs_up[i]);
+    } else {
+      procs_up_even.push_back(procs_up[i]);
+    }
+  }
+
+  for (size_t i = 0; i < procs_down.size(); ++i) {
+    if (i % 2 == 0) {
+      procs_down_odd.push_back(procs_down[i]);
+    } else {
+      procs_down_even.push_back(procs_down[i]);
+    }
+  }
+
+  BuildStageS(procs_up_odd, procs_down_odd, comparators);
+  BuildStageS(procs_up_even, procs_down_even, comparators);
+
+  std::vector<int> merged;
+  merged.reserve(procs_up.size() + procs_down.size());
+  merged.insert(merged.end(), procs_up.begin(), procs_up.end());
+  merged.insert(merged.end(), procs_down.begin(), procs_down.end());
+
+  for (size_t i = 1; i + 1 < merged.size(); i += 2) {
+    comparators.emplace_back(merged[i], merged[i + 1]);
+  }
 }
 
-void PerepelkinIBatcherOddEvenMergeSortMPI::OddEvenMerge(std::vector<double> &data, const size_t left, const size_t size, const size_t gap) {
-  const size_t step = gap * 2;
-  if (step < size) {
-    OddEvenMerge(data, left, size, step);
-    OddEvenMerge(data, left + gap, size, step);
-    for (size_t i = left + gap; i + gap < left + size; i += step) {
-      if (data[i] > data[i + gap]) {
-        std::swap(data[i], data[i + gap]);
+void PerepelkinIBatcherOddEvenMergeSortMPI::BuildStageB(const std::vector<int> &procs,
+                                                        std::vector<std::pair<int, int>> &comparators) const {
+  if (procs.size() <= 1) {
+    return;
+  }
+
+  const size_t mid = procs.size() / 2;
+  std::vector<int> procs_up(procs.begin(), procs.begin() + static_cast<std::ptrdiff_t>(mid));
+  std::vector<int> procs_down(procs.begin() + static_cast<std::ptrdiff_t>(mid), procs.end());
+
+  BuildStageB(procs_up, comparators);
+  BuildStageB(procs_down, comparators);
+  BuildStageS(procs_up, procs_down, comparators);
+}
+
+void PerepelkinIBatcherOddEvenMergeSortMPI::ProcessComparators(const std::vector<int> &counts, std::vector<double> &local_data,
+                                                               const std::vector<std::pair<int, int>> &comparators) {
+  std::vector<double> peer_buffer;
+  std::vector<double> temp;
+
+  for (const auto &comp : comparators) {
+    const int first = comp.first;
+    const int second = comp.second;
+
+    if (proc_rank_ != first && proc_rank_ != second) {
+      continue;
+    }
+
+    const int peer = (proc_rank_ == first) ? second : first;
+    const int local_size = counts[proc_rank_];
+    const int peer_size = counts[peer];
+
+    peer_buffer.resize(peer_size);
+    temp.resize(local_size);
+
+    MPI_Sendrecv(local_data.data(), local_size, MPI_DOUBLE, peer, 0, peer_buffer.data(), peer_size, MPI_DOUBLE, peer, 0,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    MergeBlocks(local_data, peer_buffer, temp, proc_rank_ == first);
+    local_data.swap(temp);
+  }
+}
+
+void PerepelkinIBatcherOddEvenMergeSortMPI::MergeBlocks(const std::vector<double> &local_data,
+                                                        const std::vector<double> &peer_buffer, std::vector<double> &temp,
+                                                        bool keep_lower) const {
+  const int local_size = static_cast<int>(local_data.size());
+  const int peer_size = static_cast<int>(peer_buffer.size());
+
+  if (keep_lower) {
+    for (int tmp_index = 0, res_index = 0, cur_index = 0; tmp_index < local_size; tmp_index++) {
+      const double result = local_data[res_index];
+      const double current = peer_buffer[cur_index];
+      if (result < current) {
+        temp[tmp_index] = result;
+        res_index++;
+      } else {
+        temp[tmp_index] = current;
+        cur_index++;
       }
     }
   } else {
-    if (data[left] > data[left + gap]) {
-      std::swap(data[left], data[left + gap]);
+    for (int tmp_index = local_size - 1, res_index = local_size - 1, cur_index = peer_size - 1; tmp_index >= 0; tmp_index--) {
+      const double result = local_data[res_index];
+      const double current = peer_buffer[cur_index];
+      if (result > current) {
+        temp[tmp_index] = result;
+        res_index--;
+      } else {
+        temp[tmp_index] = current;
+        cur_index--;
+      }
     }
   }
 }
