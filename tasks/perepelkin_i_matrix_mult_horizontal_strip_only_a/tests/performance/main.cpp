@@ -19,8 +19,8 @@ class PerepelkinIMatrixMultHorizontalStripOnlyAPerfTestProcesses : public ppc::u
   OutType expected_;
 
   size_t rows_a_ = 1000;
-  size_t cols_a_ = 1000;
-  size_t cols_b_ = 1000;
+  size_t cols_a_ = 2000;
+  size_t cols_b_ = 2000;
   unsigned int seed_ = 42;
 
   void SetUp() override {
