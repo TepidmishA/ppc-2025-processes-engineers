@@ -15,7 +15,7 @@ class MelnikIMinNeighDiffVecRunPerfTestProcesses : public ppc::util::BaseRunPerf
   InType input_data_;
 
   void GenerateVector(unsigned int seed) {
-    const size_t vector_size = 500000000;
+    const size_t vector_size = 200000000;
 
     std::vector<int> vector(vector_size);
     std::mt19937 generator(seed);

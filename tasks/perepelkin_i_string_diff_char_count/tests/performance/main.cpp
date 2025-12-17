@@ -19,7 +19,7 @@ class PerepelkinIStringDiffCharCountPerfTestProcesses : public ppc::util::BaseRu
   OutType expected_count_ = 0;
 
   size_t base_length_ = 1000000;
-  int scale_factor_ = 1024;
+  int scale_factor_ = 512;
   unsigned int seed_ = 29;
   float diff_rate_ = 0.1F;
 

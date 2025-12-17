@@ -10,6 +10,7 @@ on:
       - '**/CMakeLists.txt'
       - '**/*.cmake'
       - '**/.clang-tidy'
+      - '.github/actions/clang-tidy-native/action.yml'
       - '.github/workflows/static-analysis-pr.yml'
 
 concurrency:
