@@ -29,7 +29,7 @@ class PerepelkinIBatcherOddEvenMergeSortMPI : public BaseTask {
                       std::vector<int> &displs, std::vector<double> &local_data);
   void BuildComparators(std::vector<std::pair<int, int>> &comparators) const;
   void ProcessComparators(const std::vector<int> &counts, std::vector<double> &local_data,
-                        const std::vector<std::pair<int, int>> &comparators);
+                          const std::vector<std::pair<int, int>> &comparators);
   void MergeBlocks(const std::vector<double> &local_data, const std::vector<double> &peer_buffer,
                    std::vector<double> &temp, bool keep_lower) const;
   void BuildStageS(const std::vector<int> &procs_up, const std::vector<int> &procs_down,

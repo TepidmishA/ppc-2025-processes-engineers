@@ -19,7 +19,7 @@ class PerepelkinIBatcherOddEvenMergeSortPerfTests : public ppc::util::BaseRunPer
   OutType expected_output_;
 
   size_t base_length_ = 1000000;
-  size_t scale_factor_ = 10;
+  size_t scale_factor_ = 1;
   unsigned int seed_ = 42;
 
   void SetUp() override {

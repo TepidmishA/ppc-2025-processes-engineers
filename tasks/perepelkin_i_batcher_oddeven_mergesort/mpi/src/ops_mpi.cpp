@@ -75,8 +75,8 @@ bool PerepelkinIBatcherOddEvenMergeSortMPI::RunImpl() {
     gathered.resize(padded_size);
   }
 
-  MPI_Gatherv(local_data.data(), static_cast<int>(local_data.size()), MPI_DOUBLE, gathered.data(), counts.data(), displs.data(),
-              MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(local_data.data(), static_cast<int>(local_data.size()), MPI_DOUBLE, gathered.data(), counts.data(),
+              displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   if (proc_rank_ == 0) {
     gathered.resize(original_size);
@@ -101,7 +101,8 @@ void PerepelkinIBatcherOddEvenMergeSortMPI::BcastSizes(size_t &original_size, si
   MPI_Bcast(&padded_size, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
 }
 
-void PerepelkinIBatcherOddEvenMergeSortMPI::DistributeData(const size_t &padded_size, const std::vector<double> &padded_input,
+void PerepelkinIBatcherOddEvenMergeSortMPI::DistributeData(const size_t &padded_size,
+                                                           const std::vector<double> &padded_input,
                                                            std::vector<int> &counts, std::vector<int> &displs,
                                                            std::vector<double> &local_data) {
   const int base_size = static_cast<int>(padded_size / proc_num_);
@@ -119,8 +120,8 @@ void PerepelkinIBatcherOddEvenMergeSortMPI::DistributeData(const size_t &padded_
   const int local_size = counts[proc_rank_];
   local_data.resize(local_size);
 
-  MPI_Scatterv(padded_input.data(), counts.data(), displs.data(), MPI_DOUBLE, local_data.data(), local_size, MPI_DOUBLE, 0,
-               MPI_COMM_WORLD);
+  MPI_Scatterv(padded_input.data(), counts.data(), displs.data(), MPI_DOUBLE, local_data.data(), local_size, MPI_DOUBLE,
+               0, MPI_COMM_WORLD);
 }
 
 void PerepelkinIBatcherOddEvenMergeSortMPI::BuildComparators(std::vector<std::pair<int, int>> &comparators) const {
@@ -129,7 +130,8 @@ void PerepelkinIBatcherOddEvenMergeSortMPI::BuildComparators(std::vector<std::pa
   BuildStageB(procs, comparators);
 }
 
-void PerepelkinIBatcherOddEvenMergeSortMPI::BuildStageS(const std::vector<int> &procs_up, const std::vector<int> &procs_down,
+void PerepelkinIBatcherOddEvenMergeSortMPI::BuildStageS(const std::vector<int> &procs_up,
+                                                        const std::vector<int> &procs_down,
                                                         std::vector<std::pair<int, int>> &comparators) const {
   const size_t proc_count = procs_up.size() + procs_down.size();
   if (proc_count == 1) {
@@ -189,7 +191,8 @@ void PerepelkinIBatcherOddEvenMergeSortMPI::BuildStageB(const std::vector<int> &
   BuildStageS(procs_up, procs_down, comparators);
 }
 
-void PerepelkinIBatcherOddEvenMergeSortMPI::ProcessComparators(const std::vector<int> &counts, std::vector<double> &local_data,
+void PerepelkinIBatcherOddEvenMergeSortMPI::ProcessComparators(const std::vector<int> &counts,
+                                                               std::vector<double> &local_data,
                                                                const std::vector<std::pair<int, int>> &comparators) {
   std::vector<double> peer_buffer;
   std::vector<double> temp;
@@ -218,8 +221,8 @@ void PerepelkinIBatcherOddEvenMergeSortMPI::ProcessComparators(const std::vector
 }
 
 void PerepelkinIBatcherOddEvenMergeSortMPI::MergeBlocks(const std::vector<double> &local_data,
-                                                        const std::vector<double> &peer_buffer, std::vector<double> &temp,
-                                                        bool keep_lower) const {
+                                                        const std::vector<double> &peer_buffer,
+                                                        std::vector<double> &temp, bool keep_lower) const {
   const int local_size = static_cast<int>(local_data.size());
   const int peer_size = static_cast<int>(peer_buffer.size());
 
@@ -236,7 +239,8 @@ void PerepelkinIBatcherOddEvenMergeSortMPI::MergeBlocks(const std::vector<double
       }
     }
   } else {
-    for (int tmp_index = local_size - 1, res_index = local_size - 1, cur_index = peer_size - 1; tmp_index >= 0; tmp_index--) {
+    for (int tmp_index = local_size - 1, res_index = local_size - 1, cur_index = peer_size - 1; tmp_index >= 0;
+         tmp_index--) {
       const double result = local_data[res_index];
       const double current = peer_buffer[cur_index];
       if (result > current) {
