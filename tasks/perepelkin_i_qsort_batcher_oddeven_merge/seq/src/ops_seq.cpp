@@ -1,8 +1,7 @@
 #include "perepelkin_i_qsort_batcher_oddeven_merge/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cstddef>
-#include <cstdlib>
+#include <utility>
 #include <vector>
 
 #include "perepelkin_i_qsort_batcher_oddeven_merge/common/include/common.hpp"
@@ -30,7 +29,8 @@ bool PerepelkinIQsortBatcherOddEvenMergeSEQ::RunImpl() {
   }
 
   std::vector<double> buffer = data;
-  std::sort(buffer.begin(), buffer.end());
+  std::ranges::sort(buffer.begin(), buffer.end());
+
   GetOutput() = std::move(buffer);
   return true;
 }

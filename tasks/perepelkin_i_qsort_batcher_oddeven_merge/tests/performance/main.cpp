@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <random>
-#include <string>
-#include <tuple>
 #include <vector>
 
 #include "perepelkin_i_qsort_batcher_oddeven_merge/common/include/common.hpp"
@@ -25,7 +24,7 @@ class PerepelkinIQsortBatcherOddEvenMergePerfTests : public ppc::util::BaseRunPe
   void SetUp() override {
     input_data_ = GenerateData(base_length_, scale_factor_, seed_);
     expected_output_ = input_data_;
-    std::sort(expected_output_.begin(), expected_output_.end());
+    std::ranges::sort(expected_output_.begin(), expected_output_.end());
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -58,9 +57,9 @@ TEST_P(PerepelkinIQsortBatcherOddEvenMergePerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PerepelkinIQsortBatcherOddEvenMergeMPI,
-                                                       PerepelkinIQsortBatcherOddEvenMergeSEQ>(
-    PPC_SETTINGS_perepelkin_i_qsort_batcher_oddeven_merge);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, PerepelkinIQsortBatcherOddEvenMergeMPI, PerepelkinIQsortBatcherOddEvenMergeSEQ>(
+        PPC_SETTINGS_perepelkin_i_qsort_batcher_oddeven_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

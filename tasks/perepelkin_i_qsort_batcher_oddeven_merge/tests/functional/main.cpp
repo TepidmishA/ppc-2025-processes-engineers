@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "perepelkin_i_qsort_batcher_oddeven_merge/common/include/common.hpp"
@@ -29,7 +30,7 @@ class PerepelkinIQsortBatcherOddEvenMergeFuncTests : public ppc::util::BaseRunFu
 
   bool CheckTestOutputData(OutType &output_data) final {
     OutType expected = input_data_;
-    std::sort(expected.begin(), expected.end());
+    std::ranges::sort(expected.begin(), expected.end());
     return expected == output_data;
   }
 
@@ -63,11 +64,10 @@ const std::array<TestType, 12> kTestParams = {
                    std::vector<double>{12.3, -7.7, 5.5, 0.0, 2.2, 2.2, -3.3, 9.9, -1.1, 4.4, 6.6, -8.8, 7.7}),
 };
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<PerepelkinIQsortBatcherOddEvenMergeMPI, InType>(
-                       kTestParams, PPC_SETTINGS_perepelkin_i_qsort_batcher_oddeven_merge),
-                   ppc::util::AddFuncTask<PerepelkinIQsortBatcherOddEvenMergeSEQ, InType>(
-                       kTestParams, PPC_SETTINGS_perepelkin_i_qsort_batcher_oddeven_merge));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PerepelkinIQsortBatcherOddEvenMergeMPI, InType>(
+                                               kTestParams, PPC_SETTINGS_perepelkin_i_qsort_batcher_oddeven_merge),
+                                           ppc::util::AddFuncTask<PerepelkinIQsortBatcherOddEvenMergeSEQ, InType>(
+                                               kTestParams, PPC_SETTINGS_perepelkin_i_qsort_batcher_oddeven_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

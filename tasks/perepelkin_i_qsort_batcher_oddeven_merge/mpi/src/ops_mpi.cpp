@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
-#include <functional>
 #include <limits>
 #include <numeric>
 #include <utility>
@@ -61,7 +60,7 @@ bool PerepelkinIQsortBatcherOddEvenMergeMPI::RunImpl() {
 
   // [3] Local sort
   if (!local_data.empty()) {
-    std::sort(local_data.begin(), local_data.end());
+    std::ranges::sort(local_data.begin(), local_data.end());
   }
 
   // [4] Global merge via comparator network
@@ -85,7 +84,7 @@ bool PerepelkinIQsortBatcherOddEvenMergeMPI::RunImpl() {
 
   // [6] Bcast output to all processes
   GetOutput().resize(original_size);
-  MPI_Bcast(GetOutput().data(), original_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(GetOutput().data(), static_cast<int>(original_size), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   return true;
 }
@@ -102,9 +101,9 @@ void PerepelkinIQsortBatcherOddEvenMergeMPI::BcastSizes(size_t &original_size, s
 }
 
 void PerepelkinIQsortBatcherOddEvenMergeMPI::DistributeData(const size_t &padded_size,
-                                                           const std::vector<double> &padded_input,
-                                                           std::vector<int> &counts, std::vector<int> &displs,
-                                                           std::vector<double> &local_data) {
+                                                            const std::vector<double> &padded_input,
+                                                            std::vector<int> &counts, std::vector<int> &displs,
+                                                            std::vector<double> &local_data) const {
   const int base_size = static_cast<int>(padded_size / proc_num_);
   const int remainder = static_cast<int>(padded_size % proc_num_);
 
@@ -126,13 +125,13 @@ void PerepelkinIQsortBatcherOddEvenMergeMPI::DistributeData(const size_t &padded
 
 void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildComparators(std::vector<std::pair<int, int>> &comparators) const {
   std::vector<int> procs(proc_num_);
-  std::iota(procs.begin(), procs.end(), 0);
+  std::ranges::iota(procs.begin(), procs.end(), 0);
   BuildStageB(procs, comparators);
 }
 
 void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildStageS(const std::vector<int> &procs_up,
-                                                        const std::vector<int> &procs_down,
-                                                        std::vector<std::pair<int, int>> &comparators) const {
+                                                         const std::vector<int> &procs_down,
+                                                         std::vector<std::pair<int, int>> &comparators) const {
   const size_t proc_count = procs_up.size() + procs_down.size();
   if (proc_count == 1) {
     return;
@@ -177,7 +176,7 @@ void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildStageS(const std::vector<int> 
 }
 
 void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildStageB(const std::vector<int> &procs,
-                                                        std::vector<std::pair<int, int>> &comparators) const {
+                                                         std::vector<std::pair<int, int>> &comparators) const {
   if (procs.size() <= 1) {
     return;
   }
@@ -191,9 +190,9 @@ void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildStageB(const std::vector<int> 
   BuildStageS(procs_up, procs_down, comparators);
 }
 
-void PerepelkinIQsortBatcherOddEvenMergeMPI::ProcessComparators(const std::vector<int> &counts,
-                                                               std::vector<double> &local_data,
-                                                               const std::vector<std::pair<int, int>> &comparators) {
+void PerepelkinIQsortBatcherOddEvenMergeMPI::ProcessComparators(
+    const std::vector<int> &counts, std::vector<double> &local_data,
+    const std::vector<std::pair<int, int>> &comparators) const {
   std::vector<double> peer_buffer;
   std::vector<double> temp;
 
@@ -212,8 +211,9 @@ void PerepelkinIQsortBatcherOddEvenMergeMPI::ProcessComparators(const std::vecto
     peer_buffer.resize(peer_size);
     temp.resize(local_size);
 
+    MPI_Status status;
     MPI_Sendrecv(local_data.data(), local_size, MPI_DOUBLE, peer, 0, peer_buffer.data(), peer_size, MPI_DOUBLE, peer, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                 MPI_COMM_WORLD, &status);
 
     MergeBlocks(local_data, peer_buffer, temp, proc_rank_ == first);
     local_data.swap(temp);
@@ -221,8 +221,8 @@ void PerepelkinIQsortBatcherOddEvenMergeMPI::ProcessComparators(const std::vecto
 }
 
 void PerepelkinIQsortBatcherOddEvenMergeMPI::MergeBlocks(const std::vector<double> &local_data,
-                                                        const std::vector<double> &peer_buffer,
-                                                        std::vector<double> &temp, bool keep_lower) const {
+                                                         const std::vector<double> &peer_buffer,
+                                                         std::vector<double> &temp, bool keep_lower) {
   const int local_size = static_cast<int>(local_data.size());
   const int peer_size = static_cast<int>(peer_buffer.size());
 
