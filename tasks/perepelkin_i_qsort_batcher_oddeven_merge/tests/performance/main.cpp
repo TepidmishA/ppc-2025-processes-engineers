@@ -18,7 +18,7 @@ class PerepelkinIQsortBatcherOddEvenMergePerfTests : public ppc::util::BaseRunPe
   OutType expected_output_;
 
   size_t base_length_ = 1000000;
-  size_t scale_factor_ = 1;
+  size_t scale_factor_ = 16;
   unsigned int seed_ = 42;
 
   void SetUp() override {
