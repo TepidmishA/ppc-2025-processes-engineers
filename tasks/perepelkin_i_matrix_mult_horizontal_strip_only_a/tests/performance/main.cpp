@@ -46,14 +46,14 @@ class PerepelkinIMatrixMultHorizontalStripOnlyAPerfTestProcesses : public ppc::u
     std::vector<std::vector<double>> matrix_a(rows_a, std::vector<double>(cols_a));
     std::vector<std::vector<double>> matrix_b(cols_a, std::vector<double>(cols_b));
 
-    for (size_t i = 0; i < rows_a; ++i) {
-      for (size_t j = 0; j < cols_a; ++j) {
+    for (size_t i = 0; i < rows_a; i++) {
+      for (size_t j = 0; j < cols_a; j++) {
         matrix_a[i][j] = static_cast<double>(val_dist(gen));
       }
     }
 
-    for (size_t i = 0; i < cols_a; ++i) {
-      for (size_t j = 0; j < cols_b; ++j) {
+    for (size_t i = 0; i < cols_a; i++) {
+      for (size_t j = 0; j < cols_b; j++) {
         matrix_b[i][j] = static_cast<double>(val_dist(gen));
       }
     }
