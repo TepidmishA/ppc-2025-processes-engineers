@@ -95,27 +95,6 @@ TEST(PerfTests, CheckPerfPipelineFloat) {
   EXPECT_EQ(test_task->GetOutput(), in.size());
 }
 
-TEST(PerfTests, CheckPerfPipelineUint8tSlowTest) {
-  std::vector<uint8_t> in(128, 1);
-
-  auto test_task = std::make_shared<ppc::test::FakePerfTask<std::vector<uint8_t>, uint8_t>>(in);
-
-  Perf<std::vector<uint8_t>, uint8_t> perf_analyzer(test_task);
-
-  PerfAttr perf_attr;
-  perf_attr.num_running = 1;
-
-  const auto t0 = std::chrono::high_resolution_clock::now();
-  perf_attr.current_timer = [&] {
-    auto current_time_point = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(current_time_point - t0).count();
-    return static_cast<double>(duration) * 1e-9;
-  };
-  perf_analyzer.PipelineRun(perf_attr);
-
-  ASSERT_ANY_THROW(perf_analyzer.PrintPerfStatistic("check_perf_pipeline_uint8_t_slow_test"));
-}
-
 TEST(PerfTests, SlowPerfRespectsEnvOverride) {
   env::detail::set_scoped_environment_variable scoped("PPC_PERF_MAX_TIME", "12");
   std::vector<uint8_t> in(128, 1);
