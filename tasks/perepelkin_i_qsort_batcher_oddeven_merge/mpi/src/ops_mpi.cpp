@@ -125,7 +125,7 @@ void PerepelkinIQsortBatcherOddEvenMergeMPI::DistributeData(const size_t &padded
 
 void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildComparators(std::vector<std::pair<int, int>> &comparators) const {
   std::vector<int> procs(proc_num_);
-  std::ranges::iota(procs.begin(), procs.end(), 0);
+  std::iota(procs.begin(), procs.end(), 0);
   BuildStageB(procs, comparators);
 }
 
