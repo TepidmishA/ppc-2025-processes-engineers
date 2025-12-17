@@ -17,10 +17,6 @@ class PerepelkinIBatcherOddEvenMergeSortSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  size_t NextPowerOfTwo(const size_t &value);
-  void OddEvenMergeSort(std::vector<double> &data, const size_t left, const size_t size);
-  void OddEvenMerge(std::vector<double> &data, const size_t left, const size_t size, const size_t gap);
 };
 
 }  // namespace perepelkin_i_batcher_oddeven_mergesort
