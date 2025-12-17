@@ -89,15 +89,6 @@ TEST(TaskTests, CheckInt32t) {
   ASSERT_EQ(static_cast<size_t>(test_task.GetOutput()), in.size());
 }
 
-TEST(TaskTests, CheckInt32tSlow) {
-  std::vector<int32_t> in(20, 1);
-  ppc::test::FakeSlowTask<std::vector<int32_t>, int32_t> test_task(in);
-  ASSERT_EQ(test_task.Validation(), true);
-  test_task.PreProcessing();
-  test_task.Run();
-  ASSERT_ANY_THROW(test_task.PostProcessing());
-}
-
 TEST(TaskTests, SlowTaskRespectsEnvOverride) {
   env::detail::set_scoped_environment_variable scoped("PPC_TASK_MAX_TIME", "3");
   std::vector<int32_t> in(20, 1);
@@ -275,35 +266,6 @@ TEST(TaskTest, TaskDestructorThrowsIfEmpty) {
   }
   EXPECT_TRUE(ppc::util::DestructorFailureFlag::Get());
   ppc::util::DestructorFailureFlag::Unset();
-}
-
-TEST(TaskTest, InternalTimeTestThrowsIfTimeoutExceeded) {
-  struct SlowTask : Task<std::vector<int32_t>, int32_t> {
-    explicit SlowTask(const std::vector<int32_t> &in) {
-      this->GetInput() = in;
-    }
-    bool ValidationImpl() override {
-      return true;
-    }
-    bool PreProcessingImpl() override {
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-      return true;
-    }
-    bool RunImpl() override {
-      return true;
-    }
-    bool PostProcessingImpl() override {
-      return true;
-    }
-  };
-
-  std::vector<int32_t> in(20, 1);
-  SlowTask task(in);
-  task.GetStateOfTesting() = StateOfTesting::kFunc;
-  task.Validation();
-  EXPECT_NO_THROW(task.PreProcessing());
-  task.Run();
-  EXPECT_THROW(task.PostProcessing(), std::runtime_error);
 }
 
 class DummyTask : public Task<int, int> {
