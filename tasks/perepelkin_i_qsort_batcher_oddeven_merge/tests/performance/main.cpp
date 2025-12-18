@@ -35,7 +35,7 @@ class PerepelkinIQsortBatcherOddEvenMergePerfTests : public ppc::util::BaseRunPe
     return input_data_;
   }
 
-  static InType GenerateData(size_t base_length, size_t scale_factor, unsigned int seed) {
+  static std::vector<double> GenerateData(size_t base_length, size_t scale_factor, unsigned int seed) {
     std::mt19937 gen(seed);
     std::uniform_real_distribution<double> dist(-1000.0, 1000.0);
 

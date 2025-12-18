@@ -60,9 +60,7 @@ bool PerepelkinIQsortBatcherOddEvenMergeMPI::RunImpl() {
   DistributeData(padded_size, padded_input, counts, displs, local_data);
 
   // [3] Local sort
-  if (!local_data.empty()) {
-    std::ranges::sort(local_data.begin(), local_data.end());
-  }
+  std::ranges::sort(local_data.begin(), local_data.end());
 
   // [4] Global merge via comparator network
   std::vector<std::pair<int, int>> comparators;
@@ -106,15 +104,14 @@ void PerepelkinIQsortBatcherOddEvenMergeMPI::DistributeData(const size_t &padded
                                                             std::vector<int> &counts, std::vector<int> &displs,
                                                             std::vector<double> &local_data) const {
   const int base_size = static_cast<int>(padded_size / proc_num_);
-  const int remainder = static_cast<int>(padded_size % proc_num_);
 
   counts.resize(proc_num_);
   displs.resize(proc_num_);
 
   for (int i = 0, offset = 0; i < proc_num_; i++) {
-    counts[i] = base_size + (i < remainder ? 1 : 0);
+    counts[i] = base_size;
     displs[i] = offset;
-    offset += counts[i];
+    offset += base_size;
   }
 
   const int local_size = counts[proc_rank_];
