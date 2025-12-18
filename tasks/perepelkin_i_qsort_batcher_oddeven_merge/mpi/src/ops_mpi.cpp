@@ -6,7 +6,8 @@
 #include <cstddef>
 #include <cstdlib>
 #include <limits>
-#include <numeric>
+#include <stack>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -110,7 +111,7 @@ void PerepelkinIQsortBatcherOddEvenMergeMPI::DistributeData(const size_t &padded
   counts.resize(proc_num_);
   displs.resize(proc_num_);
 
-  for (int i = 0, offset = 0; i < proc_num_; ++i) {
+  for (int i = 0, offset = 0; i < proc_num_; i++) {
     counts[i] = base_size + (i < remainder ? 1 : 0);
     displs[i] = offset;
     offset += counts[i];
@@ -125,69 +126,99 @@ void PerepelkinIQsortBatcherOddEvenMergeMPI::DistributeData(const size_t &padded
 
 void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildComparators(std::vector<std::pair<int, int>> &comparators) const {
   std::vector<int> procs(proc_num_);
-  std::iota(procs.begin(), procs.end(), 0);
+  for (int i = 0; i < proc_num_; i++) {
+    procs[i] = i;
+  }
+
   BuildStageB(procs, comparators);
 }
 
-void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildStageS(const std::vector<int> &procs_up,
-                                                         const std::vector<int> &procs_down,
-                                                         std::vector<std::pair<int, int>> &comparators) const {
-  const size_t proc_count = procs_up.size() + procs_down.size();
-  if (proc_count == 1) {
-    return;
-  }
-  if (proc_count == 2) {
-    comparators.emplace_back(procs_up.front(), procs_down.front());
-    return;
-  }
+void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildStageB(const std::vector<int> &procs,
+                                                         std::vector<std::pair<int, int>> &comparators) {
+  // Task: (subarray, is_merge_phase)
+  std::stack<std::pair<std::vector<int>, bool>> tasks;
+  tasks.emplace(procs, false);
 
-  std::vector<int> procs_up_odd;
-  std::vector<int> procs_up_even;
-  std::vector<int> procs_down_odd;
-  std::vector<int> procs_down_even;
+  while (!tasks.empty()) {
+    auto [current, is_merge] = tasks.top();
+    tasks.pop();
 
-  for (size_t i = 0; i < procs_up.size(); ++i) {
-    if (i % 2 == 0) {
-      procs_up_odd.push_back(procs_up[i]);
-    } else {
-      procs_up_even.push_back(procs_up[i]);
+    if (current.size() <= 1) {
+      continue;
     }
-  }
 
-  for (size_t i = 0; i < procs_down.size(); ++i) {
-    if (i % 2 == 0) {
-      procs_down_odd.push_back(procs_down[i]);
-    } else {
-      procs_down_even.push_back(procs_down[i]);
+    // Split phase: divide and schedule children
+    auto mid = static_cast<DiffT>(current.size() / 2);
+    std::vector<int> left(current.begin(), current.begin() + mid);
+    std::vector<int> right(current.begin() + mid, current.end());
+
+    if (is_merge) {
+      BuildStageS(left, right, comparators);
+      continue;
     }
-  }
 
-  BuildStageS(procs_up_odd, procs_down_odd, comparators);
-  BuildStageS(procs_up_even, procs_down_even, comparators);
-
-  std::vector<int> merged;
-  merged.reserve(procs_up.size() + procs_down.size());
-  merged.insert(merged.end(), procs_up.begin(), procs_up.end());
-  merged.insert(merged.end(), procs_down.begin(), procs_down.end());
-
-  for (size_t i = 1; i + 1 < merged.size(); i += 2) {
-    comparators.emplace_back(merged[i], merged[i + 1]);
+    // Schedule merge after children complete
+    tasks.emplace(current, true);
+    tasks.emplace(right, false);  // Right child first (LIFO order)
+    tasks.emplace(left, false);
   }
 }
 
-void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildStageB(const std::vector<int> &procs,
-                                                         std::vector<std::pair<int, int>> &comparators) const {
-  if (procs.size() <= 1) {
-    return;
+void PerepelkinIQsortBatcherOddEvenMergeMPI::BuildStageS(const std::vector<int> &up, const std::vector<int> &down,
+                                                         std::vector<std::pair<int, int>> &comparators) {
+  // Task: (part_up, part_down, is_merge_phase)
+  std::stack<std::tuple<std::vector<int>, std::vector<int>, bool>> tasks;
+  tasks.emplace(up, down, false);
+
+  while (!tasks.empty()) {
+    auto [part_up, part_down, is_merge] = tasks.top();
+    tasks.pop();
+    const size_t total_size = part_up.size() + part_down.size();
+
+    if (total_size <= 1) {
+      continue;
+    }
+    if (total_size == 2) {
+      comparators.emplace_back(part_up[0], part_down[0]);
+      continue;
+    }
+
+    if (!is_merge) {
+      // Split phase: separate odd/even indices
+      auto [a_odd, a_even] = Split(part_up);
+      auto [b_odd, b_even] = Split(part_down);
+
+      // Schedule merge after recursive processing
+      tasks.emplace(part_up, part_down, true);
+      tasks.emplace(a_even, b_even, false);
+      tasks.emplace(a_odd, b_odd, false);
+      continue;
+    }
+
+    // Merge phase: connect adjacent elements
+    std::vector<int> merged;
+    merged.reserve(total_size);
+    merged.insert(merged.end(), part_up.begin(), part_up.end());
+    merged.insert(merged.end(), part_down.begin(), part_down.end());
+
+    for (size_t i = 1; i < merged.size() - 1; i += 2) {
+      comparators.emplace_back(merged[i], merged[i + 1]);
+    }
   }
+}
 
-  const size_t mid = procs.size() / 2;
-  std::vector<int> procs_up(procs.begin(), procs.begin() + static_cast<std::ptrdiff_t>(mid));
-  std::vector<int> procs_down(procs.begin() + static_cast<std::ptrdiff_t>(mid), procs.end());
-
-  BuildStageB(procs_up, comparators);
-  BuildStageB(procs_down, comparators);
-  BuildStageS(procs_up, procs_down, comparators);
+std::pair<std::vector<int>, std::vector<int>> PerepelkinIQsortBatcherOddEvenMergeMPI::Split(
+    const std::vector<int> &data) {
+  std::vector<int> odd;
+  std::vector<int> even;
+  for (size_t i = 0; i < data.size(); i++) {
+    if (i % 2 == 0) {
+      even.push_back(data[i]);
+    } else {
+      odd.push_back(data[i]);
+    }
+  }
+  return std::make_pair(std::move(odd), std::move(even));
 }
 
 void PerepelkinIQsortBatcherOddEvenMergeMPI::ProcessComparators(

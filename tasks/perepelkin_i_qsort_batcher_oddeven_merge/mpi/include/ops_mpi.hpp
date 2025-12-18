@@ -28,14 +28,17 @@ class PerepelkinIQsortBatcherOddEvenMergeMPI : public BaseTask {
   void BcastSizes(size_t &original_size, size_t &padded_size);
   void DistributeData(const size_t &padded_size, const std::vector<double> &padded_input, std::vector<int> &counts,
                       std::vector<int> &displs, std::vector<double> &local_data) const;
+
   void BuildComparators(std::vector<std::pair<int, int>> &comparators) const;
+  std::pair<std::vector<int>, std::vector<int>> static Split(const std::vector<int> &data);
+  void static BuildStageS(const std::vector<int> &procs_up, const std::vector<int> &procs_down,
+                          std::vector<std::pair<int, int>> &comparators);
+  void static BuildStageB(const std::vector<int> &procs, std::vector<std::pair<int, int>> &comparators);
+
   void ProcessComparators(const std::vector<int> &counts, std::vector<double> &local_data,
                           const std::vector<std::pair<int, int>> &comparators) const;
   void static MergeBlocks(const std::vector<double> &local_data, const std::vector<double> &peer_buffer,
                           std::vector<double> &temp, bool keep_lower);
-  void BuildStageS(const std::vector<int> &procs_up, const std::vector<int> &procs_down,
-                   std::vector<std::pair<int, int>> &comparators) const;
-  void BuildStageB(const std::vector<int> &procs, std::vector<std::pair<int, int>> &comparators) const;
 };
 
 }  // namespace perepelkin_i_qsort_batcher_oddeven_merge
