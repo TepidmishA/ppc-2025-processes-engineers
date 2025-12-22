@@ -29,6 +29,10 @@ class PerepelkinIQsortBatcherOddEvenMergeFuncTests : public ppc::util::BaseRunFu
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    if (input_data_.empty()) {
+      return output_data.empty();
+    }
+
     OutType expected = input_data_;
     std::qsort(expected.data(), expected.size(), sizeof(double), [](const void *a, const void *b) {
       double arg1 = *static_cast<const double *>(a);
