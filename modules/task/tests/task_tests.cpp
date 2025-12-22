@@ -19,7 +19,6 @@
 #include "task/include/task.hpp"
 #include "util/include/util.hpp"
 
-using ppc::task::StateOfTesting;
 using ppc::task::StatusOfTask;
 using ppc::task::Task;
 using ppc::task::TypeOfTask;
