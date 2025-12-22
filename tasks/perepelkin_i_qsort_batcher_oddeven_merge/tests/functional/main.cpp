@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdlib>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -30,7 +30,17 @@ class PerepelkinIQsortBatcherOddEvenMergeFuncTests : public ppc::util::BaseRunFu
 
   bool CheckTestOutputData(OutType &output_data) final {
     OutType expected = input_data_;
-    std::ranges::sort(expected.begin(), expected.end());
+    std::qsort(expected.data(), expected.size(), sizeof(double), [](const void *a, const void *b) {
+      double arg1 = *static_cast<const double *>(a);
+      double arg2 = *static_cast<const double *>(b);
+      if (arg1 < arg2) {
+        return -1;
+      }
+      if (arg1 > arg2) {
+        return 1;
+      }
+      return 0;
+    });
     return expected == output_data;
   }
 

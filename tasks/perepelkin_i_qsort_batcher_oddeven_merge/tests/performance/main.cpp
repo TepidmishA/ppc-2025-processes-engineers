@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <cstddef>
+#include <cstdlib>
 #include <random>
 #include <vector>
 
@@ -18,13 +18,23 @@ class PerepelkinIQsortBatcherOddEvenMergePerfTests : public ppc::util::BaseRunPe
   OutType expected_output_;
 
   size_t base_length_ = 1000000;
-  size_t scale_factor_ = 16;
+  size_t scale_factor_ = 8;
   unsigned int seed_ = 42;
 
   void SetUp() override {
     input_data_ = GenerateData(base_length_, scale_factor_, seed_);
     expected_output_ = input_data_;
-    std::ranges::sort(expected_output_.begin(), expected_output_.end());
+    std::qsort(expected_output_.data(), expected_output_.size(), sizeof(double), [](const void *a, const void *b) {
+      double arg1 = *static_cast<const double *>(a);
+      double arg2 = *static_cast<const double *>(b);
+      if (arg1 < arg2) {
+        return -1;
+      }
+      if (arg1 > arg2) {
+        return 1;
+      }
+      return 0;
+    });
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

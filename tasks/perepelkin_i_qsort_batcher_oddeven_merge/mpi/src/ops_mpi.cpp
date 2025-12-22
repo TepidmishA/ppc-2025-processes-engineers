@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 #include <limits>
@@ -60,7 +59,17 @@ bool PerepelkinIQsortBatcherOddEvenMergeMPI::RunImpl() {
   DistributeData(padded_size, padded_input, counts, displs, local_data);
 
   // [3] Local sort
-  std::ranges::sort(local_data.begin(), local_data.end());
+  std::qsort(local_data.data(), local_data.size(), sizeof(double), [](const void *a, const void *b) {
+    double arg1 = *static_cast<const double *>(a);
+    double arg2 = *static_cast<const double *>(b);
+    if (arg1 < arg2) {
+      return -1;
+    }
+    if (arg1 > arg2) {
+      return 1;
+    }
+    return 0;
+  });
 
   // [4] Global merge via comparator network
   std::vector<std::pair<int, int>> comparators;
